@@ -1,0 +1,14 @@
+@()@layouts.default {
+
+<h2>Basics</h2>
+<ul>
+  <li><a href="@{ routes.Basics.todo() }">TODO</a></p>
+  <li><a href="@{ routes.Basics.plain() }">200 OK - text/plain Response</a></p>
+  <li><a href="@{ routes.Basics.xml() }">200 OK - text/xml Response</a></p>
+  <li><a href="@{ routes.Basics.html() }">200 OK - text/html Response</a></p>
+  <li><a href="@{ routes.Basics.redirect() }">Redirect to @{ routes.Basics.plain() }</a></p>
+  <li><a href="@{ routes.Basics.forbidden() }">403 Forbidden</a></p>
+  <li><a href="@{ routes.Basics.notfound() }">404 Not Found</a></p>
+</ul>
+
+}
