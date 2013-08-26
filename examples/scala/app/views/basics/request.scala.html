@@ -1,0 +1,48 @@
+@(request: RequestHeader)@_layouts.default {
+<h2>play.api.mvc.RequestHeader</h2>
+<h3>Abstarct Value Members</h3>
+<dl>
+  <dt>request.headers</dt>
+  <dd>
+    <ul>@request.headers.keys.toList.sorted.map { k =>
+      @request.headers.getAll(k).map { v =>
+      <li>@{ k }: @{ v }</li> }
+    }</ul>
+  </dd>
+  <dt>request.id</dt>
+  <dd>@{ request.id }</dd>
+  <dt>request.method</dt>
+  <dd>@{ request.method }</dd>
+  <dt>request.path</dt>
+  <dd>@{ request.path }</dd>
+  <dt>request.queryString</dt>
+  <dd>
+    <ul>@request.queryString.map { case (k, vs) =>
+      <li>@{ k }: @{ vs.mkString(",") }</li> }
+    </ul>
+  </dd>
+  <dt>request.remoteAddress</dt>
+  <dd>@{ request.remoteAddress }</dd>
+  <dt>request.tags</dt>
+  <dd>
+    <ul>@request.tags.map { case (k, v) =>
+      <li>@{ k }: @{ v }</li> }
+    </ul>
+  </dd>
+  <dt>request.uri</dt>
+  <dd>@{ request.uri }</dd>
+  <dt>request.version</dt>
+  <dd>@{ request.version }</dd>
+</dl>
+
+<h3>Concrete Value Members</h3>
+<dl>
+  <dt>request.cookies</dt>
+  <dd>@{ request.cookies }</dd>
+  <dt>request.domain</dt>
+  <dd>@{ request.domain }</dd>
+  <dt>request.host</dt>
+  <dd>@{ request.host }</dd>
+  <dt>request.rawQueryString</dt>
+  <dd>@{ request.rawQueryString }</dd>
+</dl> }
