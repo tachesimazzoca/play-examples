@@ -1,0 +1,27 @@
+@(app: play.api.Application)@_layouts.default {
+<h2>Play.current: play.api.Application</h2>
+<dl>
+  <dt>Play.current.configuration</dt>
+  <dd>
+    <table>@app.configuration.entrySet.toList.sortBy(a => a._1).map { t =>
+    <tr>
+      <td>@{ t._1 }</td>
+      <td>@{ t._2 }</td>
+    </tr>
+    }</table>
+  </dd>
+  <dt>Play.current.mode</dt>
+  <dd>@{ app.mode }</dd>
+  <dt>Play.current.global</dt>
+  <dd>@{ app.global }</dd>
+  <dt>Play.current.path</dt>
+  <dd>@{ app.path }</dd>
+  <dt>Play.current.plugins</dt>
+  <dd>
+    <ul>@app.plugins.map { p =>
+    <li>@{ p }</li>
+    }</ul>
+  </dd>
+  <dt>Play.current.sources</dt>
+  <dd>@{ app.sources }</dd>
+</dl> }

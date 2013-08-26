@@ -7,5 +7,6 @@ GET /basics/html                        controllers.Basics.html
 GET /basics/redirect                    controllers.Basics.redirect
 GET /basics/forbidden                   controllers.Basics.forbidden
 GET /basics/notfound                    controllers.Basics.notfound
+GET /basics/application                 controllers.Basics.application
 
 GET /*file                              controllers.Assets.at(path="/public", file)

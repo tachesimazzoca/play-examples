@@ -51,4 +51,8 @@ object Basics extends Controller {
     println(result)
     result
   } 
+
+  def application = Action {
+    Ok(views.html.basics.application(Play.current))
+  } 
 }
