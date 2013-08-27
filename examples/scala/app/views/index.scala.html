@@ -2,15 +2,22 @@
 
 <h2>Basics</h2>
 <ul>
-  <li><a href="@{ routes.Basics.todo() }">TODO</a></p>
-  <li><a href="@{ routes.Basics.plain() }">200 OK - text/plain Response</a></p>
-  <li><a href="@{ routes.Basics.xml() }">200 OK - text/xml Response</a></p>
-  <li><a href="@{ routes.Basics.html() }">200 OK - text/html Response</a></p>
-  <li><a href="@{ routes.Basics.redirect() }">Redirect to @{ routes.Basics.plain() }</a></p>
-  <li><a href="@{ routes.Basics.forbidden() }">403 Forbidden</a></p>
-  <li><a href="@{ routes.Basics.notfound() }">404 Not Found</a></p>
-  <li><a href="@{ routes.Basics.application() }">play.api.Application</a></p>
-  <li><a href="@{ routes.Basics.request() }?a=x&amp;a=y&amp;b=z">play.api.RequestHeader</a></p>
+  <li><a href="@{ routes.Basics.todo() }">TODO</a></li>
+  <li><a href="@{ routes.Basics.plain() }">200 OK - text/plain Response</a></li>
+  <li><a href="@{ routes.Basics.xml() }">200 OK - text/xml Response</a></li>
+  <li><a href="@{ routes.Basics.html() }">200 OK - text/html Response</a></li>
+  <li><a href="@{ routes.Basics.redirect() }">Redirect to @{ routes.Basics.plain() }</a></li>
+  <li><a href="@{ routes.Basics.forbidden() }">403 Forbidden</a></li>
+  <li><a href="@{ routes.Basics.notfound() }">404 Not Found</a></li>
+  <li><a href="@{ routes.Basics.application() }">play.api.Application</a></li>
+  <li><a href="@{ routes.Basics.request() }?a=x&amp;a=y&amp;b=z">play.api.RequestHeader</a></li>
 </ul>
 
+<h2>Routing</h2>
+<ul>
+  <li><a href="@{ routes.Routing.query(123, "foo", List("a", "b"), None) }">routes.Routing.query(123, "foo", List("a", "b"), None)</a></li>
+  <li><a href="@{ routes.Routing.show(123456L) }">routes.Routing.show(123456L)</a></li>
+  <li><a href="@{ routes.Routing.list("bar", 2) }">routes.Routing.list("bar", 2)</a></li>
+  <li><a href="@{ routes.Routing.list("baz") }">routes.Routing.list("baz")</a></li>
+</ul>
 }
