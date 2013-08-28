@@ -20,5 +20,6 @@
   <li><a href="@{ routes.Routing.show(123456L) }">routes.Routing.show(123456L)</a></li>
   <li><a href="@{ routes.Routing.list("bar", 2) }">routes.Routing.list("bar", 2)</a></li>
   <li><a href="@{ routes.Routing.list("baz") }">routes.Routing.list("baz")</a></li>
+  <li><a href="@{ play.api.Play.current.configuration.getString("app.context") }routing/items/custom.html">See Global.onRouteRequest</a></li>
 </ul>
 }
