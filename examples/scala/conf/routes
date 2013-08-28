@@ -14,6 +14,8 @@ GET      /routing/query                      controllers.Routing.query(n: Int, s
 GET      /routing/items/item_:id.html        controllers.Routing.show(id: Long)
 GET      /routing/items/$code<[a-z]+>.html   controllers.Routing.list(code: String, page: Int ?= 1)
 
+GET      /i18n/messages                      controllers.I18n.messages
+
 GET      /users/edit                         controllers.Users.edit(id: Option[Int])
 POST     /users/edit                         controllers.Users.submit
 

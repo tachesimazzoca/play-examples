@@ -1,0 +1,11 @@
+@(messages: Map[String, Map[String, String]])@_layouts.default {
+  <h2>play.api.i18n.Messages</h2>
+  @messages.map { case (lc, kv) =>
+  <h3>@{ lc }</h3>
+  <table>
+    @kv.keySet.toList.sorted.map { k =>
+    <tr><th>@{ k }</th><td>@{ kv(k) }</td></tr>
+    }
+  </table>
+  }
+}
