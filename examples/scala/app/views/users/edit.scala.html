@@ -1,0 +1,8 @@
+@(userForm: Form[User])@_layouts.default {
+  @helper.form(routes.Users.submit) {
+    @helper.inputText(userForm("name"))
+    @helper.inputText(userForm("email"))
+    @helper.inputText(userForm("age"))
+    <input type="submit" value="Submit">
+  }
+}

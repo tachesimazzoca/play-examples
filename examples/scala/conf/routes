@@ -1,17 +1,20 @@
-GET /                                   controllers.Application.index
+GET      /                                   controllers.Application.index
 
-GET /basics/todo                        controllers.Basics.todo
-GET /basics/plain                       controllers.Basics.plain
-GET /basics/xml                         controllers.Basics.xml
-GET /basics/html                        controllers.Basics.html
-GET /basics/redirect                    controllers.Basics.redirect
-GET /basics/forbidden                   controllers.Basics.forbidden
-GET /basics/notfound                    controllers.Basics.notfound
-GET /basics/application                 controllers.Basics.application
-GET /basics/request                     controllers.Basics.request
+GET      /basics/todo                        controllers.Basics.todo
+GET      /basics/plain                       controllers.Basics.plain
+GET      /basics/xml                         controllers.Basics.xml
+GET      /basics/html                        controllers.Basics.html
+GET      /basics/redirect                    controllers.Basics.redirect
+GET      /basics/forbidden                   controllers.Basics.forbidden
+GET      /basics/notfound                    controllers.Basics.notfound
+GET      /basics/application                 controllers.Basics.application
+GET      /basics/request                     controllers.Basics.request
 
-GET /routing/query                      controllers.Routing.query(n: Int, s: String, l: List[String], o: Option[String])
-GET /routing/items/item_:id.html        controllers.Routing.show(id: Long)
-GET /routing/items/$code<[a-z]+>.html   controllers.Routing.list(code: String, page: Int ?= 1)
+GET      /routing/query                      controllers.Routing.query(n: Int, s: String, l: List[String], o: Option[String])
+GET      /routing/items/item_:id.html        controllers.Routing.show(id: Long)
+GET      /routing/items/$code<[a-z]+>.html   controllers.Routing.list(code: String, page: Int ?= 1)
 
-GET /*file                              controllers.Assets.at(path="/public", file)
+GET      /users/edit                         controllers.Users.edit(id: Option[Int])
+POST     /users/edit                         controllers.Users.submit
+
+GET      /*file                              controllers.Assets.at(path="/public", file)
