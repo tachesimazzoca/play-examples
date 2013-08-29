@@ -8,31 +8,49 @@ import play.api.data.Forms._
 import play.api.data.format.Formats._
 import play.api.data.validation.Constraints._
 
-case class User(name: String, email: String, age: Option[Int])
+import org.joda.time.{DateTime, LocalDate}
+
+case class User(
+  id: Option[Long],
+  name: String,
+  email: String,
+  password: Option[String],
+  gender: String,
+  birthdate: Option[LocalDate]
+)
 
 object Users extends Controller {
   val userForm = Form(
     mapping(
+      "id" -> optional(longNumber),
       "name" -> text.verifying(nonEmpty),
-      "email" -> of[String].verifying(
+      "email" -> text.verifying(
         pattern(
           // Empty or e-mail format
-          """(?:|[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)""".r,
+          """(?:|[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)""".r,
           "constraint.email",
           "error.email")
       ),
-      "age" -> optional(number.verifying(
-        min(10),
-        max(100, true)
-      ))
+      "password" -> optional(text),
+      "gender" -> text.verifying(
+        pattern("""(?:0|1|2)""".r)
+      ),
+      "birthdate" -> optional(jodaLocalDate("yyyy-MM-dd"))
     )(User.apply)(User.unapply)
   )
 
   def edit(id: Option[Int]) = Action {
-    Ok(views.html.users.edit(userForm))
+    val form = id match {
+      case Some(x) => userForm.bind(Map("id" -> x.toString))
+      case None => userForm
+    }
+    Ok(views.html.users.edit(form))
   }
 
   def submit = Action { implicit request =>
-    Ok(views.html.users.edit(userForm.bindFromRequest))
+    userForm.bindFromRequest.fold(
+      form => BadRequest(views.html.users.edit(form)),
+      user => Ok(user.toString)
+    )
   }
 }

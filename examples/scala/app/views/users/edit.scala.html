@@ -1,8 +1,18 @@
 @(userForm: Form[User])@_layouts.default {
   @helper.form(routes.Users.submit) {
+    <input type="hidden" name="id" value="@{ userForm("id").value }">
     @helper.inputText(userForm("name"))
     @helper.inputText(userForm("email"))
-    @helper.inputText(userForm("age"))
+    @helper.inputText(userForm("password"), ('type, "password"))
+    @{
+      // Or use inputPassword to clear the value.
+      //helper.inputPassword(userForm("password"))
+    }
+    @helper.inputRadioGroup(
+      userForm("gender"),
+      Seq(("1", "Male"), ("2", "Female"), ("0", "None"))
+    )
+    @helper.inputText(userForm("birthdate"))
     <input type="submit" value="Submit">
   }
 }
