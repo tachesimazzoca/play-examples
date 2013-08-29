@@ -8,4 +8,14 @@ object Global extends GlobalSettings {
       case _ => super.onRouteRequest(request)
     }
   }
+
+  override def getControllerInstance[A](controllerClass: Class[A]): A = {
+    val obj = controllerClass.newInstance
+    obj match {
+      case controllers.Injection() =>
+        obj.asInstanceOf[controllers.Injection].message = "An injection message"
+      case _ =>
+    }
+    obj
+  }
 }
