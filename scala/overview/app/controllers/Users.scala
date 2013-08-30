@@ -26,8 +26,7 @@ object Users extends Controller {
       "name" -> text.verifying(nonEmpty),
       "email" -> text.verifying(
         pattern(
-          // Empty or e-mail format
-          """(?:|[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)""".r,
+          """[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*""".r,
           "constraint.email",
           "error.email")
       ),
@@ -41,7 +40,16 @@ object Users extends Controller {
 
   def edit(id: Option[Int]) = Action {
     val form = id match {
-      case Some(x) => userForm.bind(Map("id" -> x.toString))
+      case Some(x) =>
+        userForm.bind(
+          Map(
+            "id" -> x.toString,
+            "name" -> "Play User",
+            "email" -> "foo@example.net",
+            "gender" -> "1",
+            "birthdate" -> "1980-01-23"
+          )
+        )
       case None => userForm
     }
     Ok(views.html.users.edit(form))
@@ -50,7 +58,7 @@ object Users extends Controller {
   def submit = Action { implicit request =>
     userForm.bindFromRequest.fold(
       form => BadRequest(views.html.users.edit(form)),
-      user => Ok(user.toString)
+      user => Ok(views.html.users.done(user))
     )
   }
 }

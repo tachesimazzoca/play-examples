@@ -1,4 +1,10 @@
 @(userForm: Form[User])@_layouts.default {
+  <h2>@{
+    userForm("id").value match {
+      case Some(_) => "Editing User"
+      case None    => "New User"
+    }
+  }</h2>
   @helper.form(routes.Users.submit) {
     <input type="hidden" name="id" value="@{ userForm("id").value }">
     @helper.inputText(userForm("name"))

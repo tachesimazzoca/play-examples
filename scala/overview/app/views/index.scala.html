@@ -22,4 +22,10 @@
   <li><a href="@{ routes.Routing.list("baz") }">routes.Routing.list("baz")</a></li>
   <li><a href="@{ play.api.Play.current.configuration.getString("app.context") }routing/items/custom.html">See Global.onRouteRequest</a></li>
 </ul>
+
+<h2>Users</h2>
+<ul>
+  <li><a href="@{ routes.Users.edit(None) }">New User</a></li>
+  <li><a href="@{ routes.Users.edit(Some(1)) }">Edit User</a></li>
+</ul>
 }
