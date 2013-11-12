@@ -10,15 +10,13 @@ import play.api.Play.current
 
 import anorm._
 
-import test.Helpers.inTest
-
 class AccountSpec extends Specification {
 
   import models._
 
   "Account model" should {
     "be retrieved by id" in {
-      running(FakeApplication(additionalConfiguration = inTest)) {
+      running(FakeApplication()) {
         DB.withConnection { implicit conn =>
           Array(
             "TRUNCATE accounts",
@@ -43,7 +41,7 @@ class AccountSpec extends Specification {
     }
 
     "be created if needed" in {
-      running(FakeApplication(additionalConfiguration = inTest)) {
+      running(FakeApplication()) {
         DB.withConnection { implicit conn =>
           Array(
             "TRUNCATE accounts"
@@ -71,7 +69,7 @@ class AccountSpec extends Specification {
     }
 
     "be updated if needed" in {
-      running(FakeApplication(additionalConfiguration = inTest)) {
+      running(FakeApplication()) {
         DB.withConnection { implicit conn =>
           Array(
             "TRUNCATE accounts",
@@ -109,7 +107,7 @@ class AccountSpec extends Specification {
     }
 
     "be activated if needed" in {
-      running(FakeApplication(additionalConfiguration = inTest)) {
+      running(FakeApplication()) {
         DB.withConnection { implicit conn =>
           Array(
             "TRUNCATE accounts",
@@ -134,7 +132,7 @@ class AccountSpec extends Specification {
     }
 
     "be deactivated if needed" in {
-      running(FakeApplication(additionalConfiguration = inTest)) {
+      running(FakeApplication()) {
         DB.withConnection { implicit conn =>
           Array(
             "TRUNCATE accounts",

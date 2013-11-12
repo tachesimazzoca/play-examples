@@ -1,0 +1,3 @@
+SignupForm.error.email=Email address must be valid format.
+SignupForm.error.password=Password must statisfy 0-9a-zA-Z characters.
+SignupForm.error.passwords=Password (confirmation) does not match the original password.

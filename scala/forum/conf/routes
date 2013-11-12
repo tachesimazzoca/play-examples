@@ -1,0 +1,7 @@
+GET     /                                        controllers.Application.index
+
+GET     /signup/entry                            controllers.SignupController.entry
+POST    /signup/verify                           controllers.SignupController.verify
+GET     /signup/complete                         controllers.SignupController.complete(code: String)
+
+GET     /*file                                   controllers.Assets.at(path="/public", file)

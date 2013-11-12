@@ -8,13 +8,16 @@ object ApplicationBuild extends Build {
   val appVersion      = "1.0-SNAPSHOT"
 
   val appDependencies = Seq(
-    // Add your project dependencies here
     jdbc,
     anorm,
-    "mysql" % "mysql-connector-java" % "5.1.21"
+    "mysql" % "mysql-connector-java" % "5.1.21",
+    "org.apache.commons" % "commons-email" % "1.3.2"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(
-    // Add your own project settings here      
+    javaOptions in Test += "-Dconfig.file=conf/application.test.conf",
+    libraryDependencies ++= Seq(
+      "org.jvnet.mock-javamail" % "mock-javamail" % "1.9" % "test"
+    )
   )
 }

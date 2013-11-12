@@ -1,0 +1,4 @@
+@(param: components.mailer.SignupMail)Hello play-examples/forum
+
+Email: @param.signupForm.email
+Session Key: @param.sessionKey
