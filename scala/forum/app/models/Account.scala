@@ -72,15 +72,15 @@ object Account {
             }
           } + " WHERE id = {id}"
 
-          val params = {
-            Seq(
+          val params =
+            Seq[NamedParameter](
               'id -> id,
               'email -> account.email
             ) ++ {
               account.password match {
                 case Some(password) =>
                   val salt = ""
-                  Seq(
+                  Seq[NamedParameter](
                     'password_hash -> Account.hashPassword(
                         account.password.getOrElse(""), salt),
                     'password_salt -> salt
@@ -88,7 +88,6 @@ object Account {
                 case None => Seq()
               }
             }
-          }.map(v => v._1 -> toParameterValue(v._2))
 
           SQL(inSql).on(params: _*).executeUpdate() match {
             case 0 => Left("The account does not exist.")

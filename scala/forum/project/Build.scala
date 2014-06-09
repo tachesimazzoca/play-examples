@@ -1,6 +1,7 @@
 import sbt._
 import Keys._
-import play.Project._
+import play.Play.autoImport._
+import PlayKeys._
 
 object ApplicationBuild extends Build {
 
@@ -10,14 +11,15 @@ object ApplicationBuild extends Build {
   val appDependencies = Seq(
     jdbc,
     anorm,
-    "mysql" % "mysql-connector-java" % "5.1.21",
-    "org.apache.commons" % "commons-email" % "1.3.2"
+    //"mysql" % "mysql-connector-java" % "5.1.21",
+    "com.h2database" % "h2" % "1.4.178",
+    "org.apache.commons" % "commons-email" % "1.3.2",
+    "org.jvnet.mock-javamail" % "mock-javamail" % "1.9" % "test"
   )
 
-  val main = play.Project(appName, appVersion, appDependencies).settings(
+  val main = Project(appName, file(".")).enablePlugins(play.PlayScala).settings(
+    version := appVersion,
     javaOptions in Test += "-Dconfig.file=conf/application.test.conf",
-    libraryDependencies ++= Seq(
-      "org.jvnet.mock-javamail" % "mock-javamail" % "1.9" % "test"
-    )
+    libraryDependencies ++= appDependencies
   )
 }

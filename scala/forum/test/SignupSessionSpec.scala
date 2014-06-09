@@ -39,47 +39,43 @@ class SignupSessionSpec extends Specification {
       SignupSession.unserialize("""{"unknown":"key"}""") must beNone
     }
 
-    "create a new session with UUID key" in {
-      running(FakeApplication()) {
-        DB.withConnection { implicit conn =>
-          Array(
-            "TRUNCATE signup_storage"
-          ).map { SQL(_).execute() }
+    "create a new session with UUID key" in new WithApplication(FakeApplication()) {
+      DB.withConnection { implicit conn =>
+        Array(
+          "TRUNCATE TABLE signup_storage"
+        ).map { SQL(_).execute() }
 
-          val key = SignupSession.create(SignupSession("user@example.net"))
-          key must beMatching("^[0-9a-f]+(-[0-9a-f]+){4}$")
+        val key = SignupSession.create(SignupSession("user@example.net"))
+        key must beMatching("^[0-9a-f]+(-[0-9a-f]+){4}$")
 
-          SQL("SELECT COUNT(*) as c FROM signup_storage").as(scalar[Long].single) must equalTo(1L)
+        SQL("SELECT COUNT(*) as c FROM signup_storage").as(scalar[Long].single) must equalTo(1L)
 
-          SQL("""
-            SELECT storage_value FROM signup_storage WHERE storage_key = {storage_key}
-          """).on('storage_key -> key)
-            .as(scalar[String].single) must equalTo("""{"email":"user@example.net"}""")
-        }
+        SQL("""
+          SELECT storage_value FROM signup_storage WHERE storage_key = {storage_key}
+        """).on('storage_key -> key)
+          .as(scalar[String].single) must equalTo("""{"email":"user@example.net"}""")
       }
     }
 
-    "find a existing session by UUID key" in {
-      running(FakeApplication()) {
-        DB.withConnection { implicit conn =>
-          Array(
-            "TRUNCATE signup_storage"
-          ).map { SQL(_).execute() }
+    "find a existing session by UUID key" in new WithApplication(FakeApplication()) {
+      DB.withConnection { implicit conn =>
+        Array(
+          "TRUNCATE TABLE signup_storage"
+        ).map { SQL(_).execute() }
 
-          val key = java.util.UUID.randomUUID().toString
-          SignupSession.find(key) must beNone
+        val key = java.util.UUID.randomUUID().toString
+        SignupSession.find(key) must beNone
 
-          val email = "user@example.net"
-          SQL("""
-            INSERT INTO signup_storage (storage_key, storage_value)
-            VALUES ({storage_key}, {storage_value})
-          """).on(
-            'storage_key -> key,
-            'storage_value-> """{"email":"%s"}""".format(email)
-          ).execute()
+        val email = "user@example.net"
+        SQL("""
+          INSERT INTO signup_storage (storage_key, storage_value)
+          VALUES ({storage_key}, {storage_value})
+        """).on(
+          'storage_key -> key,
+          'storage_value -> """{"email":"%s"}""".format(email)
+        ).execute()
 
-          SignupSession.find(key) must beSome(SignupSession(email))
-        }
+        SignupSession.find(key) must beSome(SignupSession(email))
       }
     }
   }
