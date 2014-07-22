@@ -4,6 +4,7 @@ GET      /basics/todo                        controllers.Basics.todo
 GET      /basics/plain                       controllers.Basics.plain
 GET      /basics/xml                         controllers.Basics.xml
 GET      /basics/html                        controllers.Basics.html
+GET      /basics/session                     controllers.Basics.session
 GET      /basics/redirect                    controllers.Basics.redirect
 GET      /basics/forbidden                   controllers.Basics.forbidden
 GET      /basics/notfound                    controllers.Basics.notfound

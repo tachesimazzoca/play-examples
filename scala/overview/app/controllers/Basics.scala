@@ -52,7 +52,18 @@ object Basics extends Controller {
     result
   }
 
-  def application = Action {
+  def session = Action { request =>
+    val tsOpt = request.session.get("timestamp")
+    val sess = Session(Map("timestamp" -> System.currentTimeMillis.toString()))
+    val msg =
+      if (tsOpt.isDefined)
+        "Last visited at %s".format(new java.util.Date(tsOpt.get.toLong))
+      else
+        "Hello Session!"
+    Ok(msg).withSession(sess)
+  }
+
+  def application = Action { request =>
     Ok(views.html.basics.application(Play.current))
   }
 
