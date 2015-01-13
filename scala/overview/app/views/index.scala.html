@@ -2,30 +2,56 @@
 
 <h2>Basics</h2>
 <ul>
-  <li><a href="@{ routes.Basics.todo() }">TODO</a></li>
-  <li><a href="@{ routes.Basics.plain() }">200 OK - text/plain Response</a></li>
-  <li><a href="@{ routes.Basics.xml() }">200 OK - text/xml Response</a></li>
-  <li><a href="@{ routes.Basics.html() }">200 OK - text/html Response</a></li>
-  <li><a href="@{ routes.Basics.redirect() }">Redirect to @{ routes.Basics.plain() }</a></li>
-  <li><a href="@{ routes.Basics.forbidden() }">403 Forbidden</a></li>
-  <li><a href="@{ routes.Basics.notfound() }">404 Not Found</a></li>
-  <li><a href="@{ routes.Basics.application() }">play.api.Application</a></li>
-  <li><a href="@{ routes.Basics.request() }?a=x&amp;a=y&amp;b=z">play.api.RequestHeader</a></li>
-  <li><a href="@{ routes.I18n.messages() }">play.api.i18n.Messages</a></li>
+  <li><a href="@{ routes.BasicsController.todo() }">TODO</a></li>
+  <li><a href="@{ routes.BasicsController.plain() }">200 OK - text/plain Response</a></li>
+  <li><a href="@{ routes.BasicsController.xml() }">200 OK - text/xml Response</a></li>
+  <li><a href="@{ routes.BasicsController.html() }">200 OK - text/html Response</a></li>
+  <li><a href="@{ routes.BasicsController.redirect() }">Redirect to @{ routes.BasicsController.plain() }</a></li>
+  <li><a href="@{ routes.BasicsController.forbidden() }">403 Forbidden</a></li>
+  <li><a href="@{ routes.BasicsController.notfound() }">404 Not Found</a></li>
+  <li><a href="@{ routes.BasicsController.session() }">Session</a></li>
+  <li><a href="@{ routes.BasicsController.application() }">play.api.Application</a></li>
+  <li><a href="@{ routes.BasicsController.request() }?a=x&amp;a=y&amp;b=z">play.api.RequestHeader</a></li>
+  <li><a href="@{ routes.BasicsController.messages() }">play.api.i18n.Messages</a></li>
 </ul>
 
 <h2>Routing</h2>
 <ul>
-  <li><a href="@{ routes.Routing.query(123, "foo", List("a", "b"), None) }">routes.Routing.query(123, "foo", List("a", "b"), None)</a></li>
-  <li><a href="@{ routes.Routing.show(123456L) }">routes.Routing.show(123456L)</a></li>
-  <li><a href="@{ routes.Routing.list("bar", 2) }">routes.Routing.list("bar", 2)</a></li>
-  <li><a href="@{ routes.Routing.list("baz") }">routes.Routing.list("baz")</a></li>
+  <li><a href="@{ routes.RoutingController.query(123, "foo", List("a", "b"), None) }">routes.Routing.query(123, "foo", List("a", "b"), None)</a></li>
+  <li><a href="@{ routes.RoutingController.show(123456L) }">routes.Routing.show(123456L)</a></li>
+  <li><a href="@{ routes.RoutingController.list("bar", 2) }">routes.Routing.list("bar", 2)</a></li>
+  <li><a href="@{ routes.RoutingController.list("baz") }">routes.Routing.list("baz")</a></li>
   <li><a href="@{ play.api.Play.current.configuration.getString("app.context") }routing/items/custom.html">See Global.onRouteRequest</a></li>
+</ul>
+
+<h2>Threads</h2>
+<ul>
+  <li>
+    <pre><code>@{ play.api.Play.current.configuration.getConfig("play.akka.actor.default-dispatcher") }</code></pre>
+    <a href="@{ routes.ThreadsController.defaultAction }?msec=10">Sleep 10 msec with defaultContext</a>
+  </li>
+  <li>
+    <pre><code>@{ play.api.Play.current.configuration.getConfig("contexts.single-thread") }</code></pre>
+    <p><a href="@{ routes.ThreadsController.singleAction }?msec=10">Sleep 10 msec with Contexts.singleThread</a></p>
+  </li>
+  <li>
+    <pre><code>@{ play.api.Play.current.configuration.getConfig("contexts.expensive-operations") }</code></pre>
+    <p><a href="@{ routes.ThreadsController.expensiveAction }?msec=5000">Sleep 5 sec with Contexts.expensiveOperations</a></p>
+  </li>
+  <li>
+    <pre><code>@{ play.api.Play.current.configuration.getConfig("contexts.synchronous-operations") }</code></pre>
+    <p><a href="@{ routes.ThreadsController.synchronousAction }?msec=500">Sleep 500 msec with Contexts.synchronousAction</a></p>
+  </li>
 </ul>
 
 <h2>Users</h2>
 <ul>
-  <li><a href="@{ routes.Users.edit(None) }">New User</a></li>
-  <li><a href="@{ routes.Users.edit(Some(1)) }">Edit User</a></li>
+  <li><a href="@{ routes.UsersController.edit(None) }">New User</a></li>
+  <li><a href="@{ routes.UsersController.edit(Some(1)) }">Edit User</a></li>
+</ul>
+
+<h2>Misc</h2>
+<ul>
+  <li><a href="@{ routes.InjectionController.index }">Creating a controller via D.I.</a></li>
 </ul>
 }

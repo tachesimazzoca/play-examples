@@ -1,15 +1,14 @@
 package controllers
 
-import play.api._
 import play.api.mvc._
 
-object Injection {
+object InjectionController {
   def unapply(a: Any): Boolean = {
-    a.isInstanceOf[Injection]
+    a.isInstanceOf[InjectionController]
   }
 }
 
-class Injection extends Controller {
+class InjectionController extends Controller {
   var message: String = ""
 
   def index = Action {

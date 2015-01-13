@@ -1,25 +1,12 @@
 package controllers
 
-import play.api._
+import models.User
+import play.api.data.Forms._
+import play.api.data._
+import play.api.data.validation.Constraints._
 import play.api.mvc._
 
-import play.api.data._
-import play.api.data.Forms._
-import play.api.data.format.Formats._
-import play.api.data.validation.Constraints._
-
-import org.joda.time.{DateTime, LocalDate}
-
-case class User(
-  id: Option[Long],
-  name: String,
-  email: String,
-  password: Option[String],
-  gender: String,
-  birthdate: Option[LocalDate]
-)
-
-object Users extends Controller {
+object UsersController extends Controller {
   val userForm = Form(
     mapping(
       "id" -> optional(longNumber),

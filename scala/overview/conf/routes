@@ -1,24 +1,30 @@
 GET      /                                   controllers.Application.index
 
-GET      /basics/todo                        controllers.Basics.todo
-GET      /basics/plain                       controllers.Basics.plain
-GET      /basics/xml                         controllers.Basics.xml
-GET      /basics/html                        controllers.Basics.html
-GET      /basics/session                     controllers.Basics.session
-GET      /basics/redirect                    controllers.Basics.redirect
-GET      /basics/forbidden                   controllers.Basics.forbidden
-GET      /basics/notfound                    controllers.Basics.notfound
-GET      /basics/application                 controllers.Basics.application
-GET      /basics/request                     controllers.Basics.request
+GET      /basics/todo                        controllers.BasicsController.todo
+GET      /basics/plain                       controllers.BasicsController.plain
+GET      /basics/xml                         controllers.BasicsController.xml
+GET      /basics/html                        controllers.BasicsController.html
+GET      /basics/session                     controllers.BasicsController.session
+GET      /basics/redirect                    controllers.BasicsController.redirect
+GET      /basics/forbidden                   controllers.BasicsController.forbidden
+GET      /basics/notfound                    controllers.BasicsController.notfound
+GET      /basics/application                 controllers.BasicsController.application
+GET      /basics/request                     controllers.BasicsController.request
+GET      /basics/messages                    controllers.BasicsController.messages
 
-GET      /routing/query                      controllers.Routing.query(n: Int, s: String, l: List[String], o: Option[String])
-GET      /routing/items/item_:id.html        controllers.Routing.show(id: Long)
-GET      /routing/items/$code<[a-z]+>.html   controllers.Routing.list(code: String, page: Int ?= 1)
+GET      /routing/query                      controllers.RoutingController.query(n: Int, s: String, l: List[String], o: Option[String])
+GET      /routing/items/item_:id.html        controllers.RoutingController.show(id: Long)
+GET      /routing/items/$code<[a-z]+>.html   controllers.RoutingController.list(code: String, page: Int ?= 1)
 
-GET      /users/edit                         controllers.Users.edit(id: Option[Int])
-POST     /users/edit                         controllers.Users.submit
+GET      /threads/default                    controllers.ThreadsController.defaultAction
+GET      /threads/single                     controllers.ThreadsController.singleAction
+GET      /threads/expensive                  controllers.ThreadsController.expensiveAction
+GET      /threads/synchronous                controllers.ThreadsController.synchronousAction
+GET      /threads/timeout                    controllers.ThreadsController.timeoutAction
 
-GET      /i18n/messages                      controllers.I18n.messages
-GET      /injection                          @controllers.Injection.index
+GET      /users/edit                         controllers.UsersController.edit(id: Option[Int])
+POST     /users/edit                         controllers.UsersController.submit
+
+GET      /injection                          @controllers.InjectionController.index
 
 GET      /*file                              controllers.Assets.at(path="/public", file)

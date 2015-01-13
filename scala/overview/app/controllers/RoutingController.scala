@@ -3,7 +3,7 @@ package controllers
 import play.api._
 import play.api.mvc._
 
-object Routing extends Controller {
+object RoutingController extends Controller {
   def query(
     n: Int,
     s: String,

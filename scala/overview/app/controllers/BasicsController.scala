@@ -3,7 +3,7 @@ package controllers
 import play.api._
 import play.api.mvc._
 
-object Basics extends Controller {
+object BasicsController extends Controller {
   // The charset is handled automatically via the play.api.mvc.Codec type class.
   // Just import an implicit instance of play.api.mvc.Codec in the current scope
   // to change the charset that will be used by all operations.
@@ -28,7 +28,7 @@ object Basics extends Controller {
     //    Map(LOCATION -> routes.Basics.plain().toString)),
     //    Enumerator("")
     //)
-    val result = Redirect(routes.Basics.plain())
+    val result = Redirect(routes.BasicsController.plain())
     println(result)
     result
   }
@@ -69,5 +69,10 @@ object Basics extends Controller {
 
   def request = Action { request =>
     Ok(views.html.basics.request(request))
+  }
+
+  def messages = Action {
+    Ok(views.html.basics.messages(
+      play.api.i18n.Messages.messages(Play.current)))
   }
 }
