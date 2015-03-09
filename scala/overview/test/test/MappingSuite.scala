@@ -165,6 +165,16 @@ class MappingSuite extends FunSuite {
     }
   }
 
+  test("ignored") {
+    val m = tuple(
+      "id" -> ignored(123L),
+      "name" -> nonEmptyText
+    )
+    assert(Right((123L, "Foo")) === m.bind(Map("name" -> "Foo")))
+    assert(Right((123L, "Foo")) === m.bind(Map("id" -> "234", "name" -> "Foo")))
+    assert(Map("name" -> "Foo") === m.unbind((123L, "Foo")))
+  }
+
   test("nested value") {
     val m = mapping(
       "name" -> of[String],
@@ -204,6 +214,68 @@ class MappingSuite extends FunSuite {
         assert(List(123, 456) === a._1)
         assert(Seq("scala", "play", "framework") === a._2)
       case Left(_) => fail("It must not fail with a valid map.")
+    }
+  }
+
+  test("verifying") {
+    val m = tuple(
+      "number" -> text.verifying({ v =>
+        v.matches("^[0-9]+$")
+      }),
+      "alpha" -> text.verifying("error.alpha", { v =>
+        v.matches("^[A-Z]+$")
+      }),
+      "alnum" -> text.verifying(pattern( """^[0-9A-Z]+$""".r, error = "error.alnum")),
+      "range" -> number.verifying(min(1), max(10))
+    )
+    m.bind(Map(
+      "number" -> "---",
+      "alpha" -> "---",
+      "alnum" -> "---",
+      "range" -> "0"
+    )) match {
+      case Left(errors) =>
+        assert(4 === errors.size)
+        assert("error.unknown" === errors(0).message)
+        assert("error.alpha" === errors(1).message)
+        assert("error.alnum" === errors(2).message)
+        assert("error.min" === errors(3).message)
+        assert(Seq(1) === errors(3).args)
+      case Right(_) => fail("It must fail with an invalid map.")
+    }
+  }
+
+  test("tuple verifying") {
+    val m = tuple(
+      "username" -> tuple(
+        "main" -> text.verifying(pattern( """[a-z][a-z0-9]{4,31}""".r)),
+        "sub" -> text
+      ).verifying("error.username.sub", { v =>
+        v._1 == v._2
+      }),
+      "age" -> number.verifying(min(0), max(100))
+    )
+
+    m.bind(Map(
+      "username.main" -> "abc123",
+      "username.sub" -> "abc12",
+      "age" -> "26"
+    )) match {
+      case Left(errors) =>
+        assert(1 === errors.size)
+        assert("error.username.sub" === errors(0).message)
+      case Right(_) => fail("It must fail with an invalid map.")
+    }
+
+    m.bind(Map(
+      "username.main" -> "abc123",
+      "username.sub" -> "abc123",
+      "age" -> "101"
+    )) match {
+      case Left(errors) =>
+        assert(1 === errors.size)
+        assert("error.max" === errors(0).message)
+      case Right(_) => fail("It must fail with an invalid map.")
     }
   }
 }
