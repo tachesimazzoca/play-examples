@@ -1,14 +1,9 @@
 package test
 
-import org.specs2.mutable._
-
-import play.api.test._
-import play.api.test.Helpers._
-
-import play.api.db._
-import play.api.Play.current
-
 import anorm._
+import org.specs2.mutable._
+import play.api.db._
+import play.api.test._
 
 class AccountSpec extends Specification {
 

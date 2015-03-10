@@ -1,0 +1,3 @@
+@(signupMail: components.mail.SignupMail)Hello play-examples/forum
+
+Session Key: @signupMail.sessionKey

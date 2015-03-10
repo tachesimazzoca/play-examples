@@ -1,16 +1,11 @@
 package test
 
+import anorm.SqlParser._
+import anorm._
 import org.specs2.mutable._
-
-import play.api.test._
-import play.api.test.Helpers._
-
 import play.api.db._
 import play.api.libs.json._
-import play.api.Play.current
-
-import anorm._
-import anorm.SqlParser._
+import play.api.test._
 
 class SignupSessionSpec extends Specification {
 

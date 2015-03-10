@@ -1,8 +1,7 @@
 package components.form
 
-import play.api.data._
 import play.api.data.Forms._
-import play.api.data.validation.Constraints._
+import play.api.data._
 
 case class SignupForm(email: String, password: String)
 
