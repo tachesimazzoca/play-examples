@@ -278,4 +278,14 @@ class MappingSuite extends FunSuite {
       case Right(_) => fail("It must fail with an invalid map.")
     }
   }
+
+  test("RepeatedMapping.indexes") {
+    val data = Map(
+      "tags[1]" -> "foo",
+      "tags[2]" -> "bar",
+      "tags[0]" -> "baz",
+      "tags[1]" -> "qux"
+    )
+    assert(Seq(0, 1, 2) === RepeatedMapping.indexes("tags", data))
+  }
 }
