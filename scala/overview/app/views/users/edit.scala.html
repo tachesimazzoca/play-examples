@@ -1,24 +1,20 @@
-@(userForm: Form[models.User])@_layouts.default {
+@(userForm: Form[User])@_layouts.default {
   <h2>@{
-    userForm("id").value match {
-      case Some(_) => "Editing User"
-      case None    => "New User"
-    }
+    if (userForm("id").value.getOrElse("").trim.isEmpty) "New User"
+    else "Editing User"
   }</h2>
   @helper.form(routes.UsersController.submit) {
     <input type="hidden" name="id" value="@{ userForm("id").value }">
-    @helper.inputText(userForm("name"))
-    @helper.inputText(userForm("email"))
-    @helper.inputText(userForm("password"), ('type, "password"))
-    @{
-      // Or use inputPassword to clear the value.
-      //helper.inputPassword(userForm("password"))
-    }
+    @helper.inputText(userForm("name"), '_showConstraints -> false)
+    @helper.inputText(userForm("email"), '_help -> "Your e-mail address for verifying")
+    @helper.inputPassword(userForm("password"))
     @helper.inputRadioGroup(
       userForm("gender"),
-      Seq(("1", "Male"), ("2", "Female"), ("0", "None"))
+      Seq(("1", "Male"), ("2", "Female"), ("0", "None")),
+      '_showConstraints -> false
     )
     @helper.inputText(userForm("birthdate"))
     <input type="submit" value="Submit">
   }
 }
+@import views._helpers.fieldConstructor
