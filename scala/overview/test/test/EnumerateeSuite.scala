@@ -53,4 +53,20 @@ class EnumerateeSuite extends FunSuite {
 
     Thread.sleep(100L)
   }
+
+  test("mapInput") {
+    val sum = Iteratee.fold[Int, Int](0) { (acc, x) =>
+      acc + x
+    }
+    val inputToInt = Enumeratee.mapInput[String] {
+      case Input.El("END") => Input.EOF
+      case other => other.map(_.toInt)
+    }
+
+    // 4 and 5 will be disposed
+    val result = Enumerator("1", "2", "3", "END", "4", "5") &> inputToInt |>>> sum
+    result.onComplete(a => assert(Success(6) === a))
+
+    Thread.sleep(100L)
+  }
 }
