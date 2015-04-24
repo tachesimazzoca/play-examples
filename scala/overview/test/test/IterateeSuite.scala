@@ -6,7 +6,7 @@ import org.scalatest.junit.JUnitRunner
 import play.api.libs.iteratee._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
@@ -19,26 +19,71 @@ class IterateeSuite extends FunSuite {
   }
 
   test("DoneIteratee") {
+    val doneIt = Done[String, Int](1, Input.Empty)
+    Iteratee.flatten(doneIt.feed(Input.El("deadbeef"))).run
+      .onComplete(a => assert(Success(1) === a))
+    Iteratee.flatten(doneIt.feed(Input.Empty)).run
+      .onComplete(a => assert(Success(1) === a))
+    Iteratee.flatten(doneIt.feed(Input.EOF)).run
+      .onComplete(a => assert(Success(1) === a))
+    Thread.sleep(100L)
+
     def folder[E, A](step: Step[E, A]): Future[Option[A]] = step match {
-      case Step.Done(a, e) => Future.successful(Some(a))
+      case Step.Done(a, _) => Future.successful(Some(a))
       case Step.Cont(_) => Future.successful(None)
       case Step.Error(_, _) => Future.successful(None)
     }
-
-    //
-    // val doneIt = new Iteratee[String, Int] {
-    //   override def fold[B](folder: (Step[String, Int]) => Future[B])
-    //                       (implicit ec: ExecutionContext): Future[B] =
-    //     folder(Step.Done(1, Input.Empty))
-    // }
-    //
-    val doneIt = Done[String, Int](1, Input.Empty)
-    doneIt.fold(folder).onComplete(a => assert(Success(Some(1)) === a))
-
+    val it = new Iteratee[String, Int] {
+      override def fold[B](folder: (Step[String, Int]) => Future[B])
+                          (implicit ec: ExecutionContext): Future[B] =
+        folder(Step.Done(1, Input.Empty))
+    }
+    it.fold(folder).onComplete(a => assert(Success(Some(1)) === a))
     Thread.sleep(100L)
   }
 
   test("ContIteratee") {
+    def step(acc: Int)(in: Input[String]): Iteratee[String, Int] = in match {
+      case Input.El(e: String) => Cont(step(acc + e.toInt))
+      case Input.Empty => Cont(step(acc))
+      case Input.EOF => Done(acc, Input.EOF)
+    }
+
+    val contIt = Cont[String, Int](step(0))
+    Iteratee.flatten(contIt.feed(Input.EOF)).run
+      .onComplete(a => assert(Success(0) === a))
+    Iteratee.flatten(contIt.feed(Input.El("123"))).run
+      .onComplete(a => assert(Success(123) === a))
+
+    (for {
+      it1 <- contIt.feed(Input.El("12"))
+      it2 <- it1.feed(Input.El("34"))
+      it3 <- it2.feed(Input.Empty)
+      it4 <- it3.feed(Input.El("56"))
+      a <- it4.run
+    } yield a).onComplete(a => assert(Success(12 + 34 + 56) === a))
+    Thread.sleep(100L)
+
+    val onetimeIt = new Iteratee[String, Int] {
+      override def fold[B](folder: (Step[String, Int]) => Future[B])
+                          (implicit ec: ExecutionContext): Future[B] =
+        folder(Step.Cont {
+          case Input.El(e) => Done(e.toInt, Input.EOF)
+          case Input.Empty => this
+          case Input.EOF => Done(0, Input.EOF)
+        })
+    }
+    (for {
+      it1 <- onetimeIt.feed(Input.El("12"))
+      // The following statements will be ignored because it just
+      // returns Done(12, Input.EOF) whatever the type of Input.
+      it2 <- it1.feed(Input.El("34"))
+      it3 <- it2.feed(Input.El("56"))
+      a <- it3.run
+    } yield a).onComplete(a => assert(Success(12) === a))
+    Thread.sleep(100L)
+
+    // fold
     def folder[E, A](in: Input[E])(step: Step[E, A]): Future[A] = step match {
       case Step.Done(a, _) => Future.successful(a)
       case Step.Cont(k) => k(in).fold({
@@ -48,25 +93,10 @@ class IterateeSuite extends FunSuite {
       })
       case Step.Error(msg, _) => throw new Error(msg)
     }
-
-    //
-    // val contIt = new Iteratee[String, Int] {
-    //   override def fold[B](folder: (Step[String, Int]) => Future[B])
-    //                       (implicit ec: ExecutionContext): Future[B] =
-    //     folder(Step.Cont {
-    //       case Input.El(e) => Done(e.toInt, Input.EOF)
-    //       case Input.Empty => Error("Input.Empty not supported", Input.EOF)
-    //       case Input.EOF => Done(0, Input.EOF)
-    //     })
-    // }
-    //
-    val contIt = Cont[String, Int] {
-      case Input.El(e) => Done(e.toInt, Input.EOF)
-      case Input.Empty => Error("Input.Empty not supported", Input.EOF)
-      case Input.EOF => Done(0, Input.EOF)
-    }
-    contIt.fold(folder(Input.EOF)).onComplete(a => assert(Success(0) === a))
-    contIt.fold(folder(Input.El("123"))).onComplete(a => assert(Success(123) === a))
+    onetimeIt.fold(folder(Input.EOF))
+      .onComplete(a => assert(Success(0) === a))
+    onetimeIt.fold(folder(Input.El("123")))
+      .onComplete(a => assert(Success(123) === a))
 
     Thread.sleep(100L)
   }
