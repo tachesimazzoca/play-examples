@@ -7,7 +7,7 @@ import play.api.libs.iteratee._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
+import scala.util.{Failure, Success, Try}
 
 @RunWith(classOf[JUnitRunner])
 class IterateeSuite extends FunSuite {
@@ -75,10 +75,12 @@ class IterateeSuite extends FunSuite {
     }
     (for {
       it1 <- onetimeIt.feed(Input.El("12"))
-      // The following statements will be ignored because it just
-      // returns Done(12, Input.EOF) whatever the type of Input.
+
+      // The following feed will be ignored because it just
+      // returns Done(a, e) whatever the type of Input.
       it2 <- it1.feed(Input.El("34"))
       it3 <- it2.feed(Input.El("56"))
+
       a <- it3.run
     } yield a).onComplete(a => assert(Success(12) === a))
     Thread.sleep(100L)
@@ -99,6 +101,38 @@ class IterateeSuite extends FunSuite {
       .onComplete(a => assert(Success(123) === a))
 
     Thread.sleep(100L)
+  }
+
+  test("ErrorIteratee") {
+    val mustFail: Try[Int] => Unit = {
+      case Success(_) => fail("It must fail on ErrorIteratee")
+      case Failure(_) =>
+    }
+
+    def step(acc: Int)(in: Input[String]): Iteratee[String, Int] = in match {
+      case Input.El(e: String) =>
+        if (!e.isEmpty) Cont(step(acc + e.toInt))
+        else Error("empty string", Input.Empty)
+      case Input.Empty => Cont(step(acc))
+      case Input.EOF => Done(acc, Input.EOF)
+    }
+
+    val errorIt = Cont[String, Int](step(0))
+    Iteratee.flatten(errorIt.feed(Input.El(""))).run
+      .onComplete(mustFail)
+    Thread.sleep(100L)
+
+    (for {
+      it1 <- errorIt.feed(Input.El("12"))
+      it2 <- it1.feed(Input.El(""))
+
+      // The following feed will be ignored because it just
+      // returns Error(msg, e) whatever the type of Input.
+      it3 <- it2.feed(Input.El("56"))
+      it4 <- it3.feed(Input.Empty)
+
+      a <- it4.run
+    } yield a).onComplete(mustFail)
   }
 
   test("inputLength") {
