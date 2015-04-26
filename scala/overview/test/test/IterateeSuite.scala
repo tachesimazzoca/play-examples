@@ -167,4 +167,21 @@ class IterateeSuite extends FunSuite {
 
     Thread.sleep(100L)
   }
+
+  test("foreach") {
+    var sb = new StringBuffer()
+    val printIt = Iteratee.foreach[String](sb.append(_))
+    printIt.feed(Input.El("foo"))
+    printIt.feed(Input.El("bar"))
+    Thread.sleep(100L)
+    assert("foobar" === sb.toString())
+  }
+
+  test("flatten") {
+    val consume = Iteratee.consume[String]()
+    val newIt = consume.feed(Input.El("foo")).flatMap(_.feed(Input.El("bar")))
+    val futureIt = Iteratee.flatten(newIt)
+    futureIt.run.onComplete(a => assert(Success("foobar") === a))
+    Thread.sleep(100L)
+  }
 }
