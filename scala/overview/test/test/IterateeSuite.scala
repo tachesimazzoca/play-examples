@@ -77,7 +77,7 @@ class IterateeSuite extends FunSuite {
       it1 <- onetimeIt.feed(Input.El("12"))
 
       // The following feed will be ignored because it just
-      // returns Done(a, e) whatever the type of Input.
+      // returns Done(a, e) regardless of the type of input.
       it2 <- it1.feed(Input.El("34"))
       it3 <- it2.feed(Input.El("56"))
 
@@ -127,7 +127,7 @@ class IterateeSuite extends FunSuite {
       it2 <- it1.feed(Input.El(""))
 
       // The following feed will be ignored because it just
-      // returns Error(msg, e) whatever the type of Input.
+      // returns Error(msg, e) regardless of the type of input.
       it3 <- it2.feed(Input.El("56"))
       it4 <- it3.feed(Input.Empty)
 

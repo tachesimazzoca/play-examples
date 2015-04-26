@@ -63,7 +63,7 @@ class EnumerateeSuite extends FunSuite {
       case other => other.map(_.toInt)
     }
 
-    // 4 and 5 will be disposed
+    // 4 and 5 will be ignored
     val result = Enumerator("1", "2", "3", "END", "4", "5") &> inputToInt |>>> sum
     result.onComplete(a => assert(Success(6) === a))
 
