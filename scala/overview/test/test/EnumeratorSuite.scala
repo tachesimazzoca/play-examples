@@ -70,16 +70,31 @@ class EnumeratorSuite extends FunSuite with OneAppPerSuite {
     Thread.sleep(100L)
   }
 
-  test("generateM |>> Iterator.foreach") {
+  test("repeatM") {
     val sb = new StringBuffer()
     val printSink = Iteratee.foreach[String](a => sb.append(a))
-    val enumerator = Enumerator.generateM {
-      Promise.timeout(Some("Foo"), 200.milliseconds)
+    val enumerator = Enumerator.repeatM {
+      Promise.timeout("Foo", 100.milliseconds)
     }
     enumerator |>> printSink
 
     Thread.sleep(1000L)
-    assert(sb.toString.matches("^(Foo)+$"))
+    assert(sb.toString.matches("^(Foo)+"))
+  }
+
+  test("generateM") {
+    val sb = new StringBuffer()
+    val printSink = Iteratee.foreach[String](a => sb.append(a))
+    val enumerator = Enumerator.generateM {
+      Promise.timeout({
+        if (sb.toString.equals("FooFooFoo")) None
+        else Some("Foo")
+      }, 100.milliseconds)
+    }
+    enumerator |>> printSink
+
+    Thread.sleep(1000L)
+    assert("FooFooFoo" === sb.toString)
   }
 
   test("Concurrent.uncast") {
