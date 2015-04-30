@@ -1,6 +1,8 @@
 package controllers
 
 import play.api._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
 
 object BasicsController extends Controller {
@@ -74,5 +76,20 @@ object BasicsController extends Controller {
   def messages = Action {
     Ok(views.html.basics.messages(
       play.api.i18n.Messages.messages(Play.current)))
+  }
+
+  def download = Action {
+    val file = new java.io.File(getClass.getResource("/resources/a.txt").getPath())
+    //Ok.sendFile(
+    //  content = file,
+    //  fileName = (f => "download-" ++ f.getName())
+    //)
+    Result(
+      header = ResponseHeader(OK, Map(
+        CONTENT_DISPOSITION -> "attachment; filename=download-a.txt",
+        CONTENT_TYPE -> "application/octet-stream",
+        CONTENT_LENGTH -> file.length().toString())),
+      body = Enumerator.fromFile(file)
+    )
   }
 }
