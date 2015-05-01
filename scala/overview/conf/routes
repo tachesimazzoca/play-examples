@@ -12,6 +12,8 @@ GET      /basics/application                 controllers.BasicsController.applic
 GET      /basics/request                     controllers.BasicsController.request
 GET      /basics/messages                    controllers.BasicsController.messages
 GET      /basics/download                    controllers.BasicsController.download
+GET      /basics/stream                      controllers.BasicsController.stream
+
 GET      /routing/query                      controllers.RoutingController.query(n: Int, s: String, l: List[String], o: Option[String])
 GET      /routing/items/item_:id.html        controllers.RoutingController.show(id: Long)
 GET      /routing/items/$code<[a-z]+>.html   controllers.RoutingController.list(code: String, page: Int ?= 1)

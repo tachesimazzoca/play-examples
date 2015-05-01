@@ -80,16 +80,28 @@ object BasicsController extends Controller {
 
   def download = Action {
     val file = new java.io.File(getClass.getResource("/resources/a.txt").getPath())
-    //Ok.sendFile(
-    //  content = file,
-    //  fileName = (f => "download-" ++ f.getName())
+    //Result(
+    //  header = ResponseHeader(OK, Map(
+    //    CONTENT_DISPOSITION -> "attachment; filename=download-a.txt",
+    //    CONTENT_TYPE -> "application/octet-stream",
+    //    CONTENT_LENGTH -> file.length().toString())),
+    //  body = Enumerator.fromFile(file)
     //)
-    Result(
-      header = ResponseHeader(OK, Map(
-        CONTENT_DISPOSITION -> "attachment; filename=download-a.txt",
-        CONTENT_TYPE -> "application/octet-stream",
-        CONTENT_LENGTH -> file.length().toString())),
-      body = Enumerator.fromFile(file)
+    Ok.sendFile(
+      content = file,
+      inline = false,
+      fileName = { f => "download-" ++ f.getName()},
+      onClose = { () =>
+        println("handled onClose function")
+      }
+    )
+  }
+
+  def stream = Action {
+    val input = getClass.getResourceAsStream("/resources/a.txt")
+    Ok.chunked(Enumerator.fromStream(input)).withHeaders(
+      CONTENT_DISPOSITION -> "attachment; filename=download-a.txt",
+      CONTENT_TYPE -> "application/octet-stream"
     )
   }
 }
