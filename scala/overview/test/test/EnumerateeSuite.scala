@@ -40,14 +40,27 @@ class EnumerateeSuite extends FunSuite {
     Thread.sleep(100L)
   }
 
-  test("different input") {
+  test("apply") {
     val sum = Iteratee.fold[Int, Int](0) { (acc, x) =>
       acc + x
     }
     val strToInt = Enumeratee.map[String](_.toInt)
 
+    val doneIt = Iteratee.flatten(Enumerator(1, 2) >>> Enumerator.eof |>> sum)
+    // The iteratee doneIt has been done,
+    Iteratee.isDoneOrError(doneIt).onComplete(a => assert(a === Success(true)))
+    val transformedIt = strToInt &>> doneIt
+    // so any inputs after that will be ignored.
+    (Enumerator("3", "4", "5") |>>> transformedIt).onComplete(a =>
+      assert(Success(3) === a))
+
+    // The method apply returns Iteratee[String, Iteratee[Int, Int]]
     val adaptedIt = strToInt(sum)
+    // so we can get the original iteratee after the adaptedIt is done.
     val originalIt = Iteratee.flatten(Enumerator("1", "2") |>>> adaptedIt)
+    // The original iteratee has not been done yet because it's just
+    // an output of the adaptedIt.
+    Iteratee.isDoneOrError(originalIt).onComplete(a => assert(a === Success(false)))
     val result = Enumerator(3, 4, 5) |>>> originalIt
     result.onComplete(a => assert(Success(15) === a))
 
@@ -68,5 +81,29 @@ class EnumerateeSuite extends FunSuite {
     result.onComplete(a => assert(Success(6) === a))
 
     Thread.sleep(100L)
+  }
+
+  test("Traversable") {
+    val it = Iteratee.fold[Array[Byte], String]("") { (acc, x) =>
+      acc ++ x.map(_.toChar).mkString("")
+    }
+
+    val enumerator = Enumerator(
+      "123".getBytes(),
+      "456".getBytes(),
+      "789".getBytes()
+    )
+
+    def limitChunks(n: Int) = {
+      Enumeratee.take[Array[Byte]](n)
+    }
+    (enumerator |>>> limitChunks(2) &>> it)
+      .onComplete(a => assert(Success("123456") === a))
+
+    def limitBytes(n: Int) = {
+      Traversable.take[Array[Byte]](n)
+    }
+    (enumerator |>>> limitBytes(5) &>> it)
+      .onComplete(a => assert(Success("12345") === a))
   }
 }
