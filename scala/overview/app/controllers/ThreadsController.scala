@@ -5,8 +5,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.concurrent.Promise
 import play.api.mvc._
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
 object ThreadsController extends Controller {
@@ -31,7 +31,7 @@ object ThreadsController extends Controller {
       Thread.sleep(msec)
       Logger.info(s"Finish blocking ${thread}: ${tag}")
       Ok(s"Done after ${msec} msec: ${tag}")
-    } (context)
+    }(context)
   }
 
   def defaultAction = Action.async { request =>
@@ -67,8 +67,8 @@ object ThreadsController extends Controller {
       ("job2", (n1, n2))
     }, n2.second)
 
-    Future.firstCompletedOf(Seq(job1, job2)) map { case (job, ns) =>
+    Future.firstCompletedOf(Seq(job1, job2)).map { case (job, ns) =>
       Ok(s"The first completed job is ${job}. ${ns}")
-    }
+    }(Contexts.expensiveOperations)
   }
 }
