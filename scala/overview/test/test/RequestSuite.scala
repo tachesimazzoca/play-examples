@@ -19,16 +19,26 @@ class RequestSuite extends FunSuite {
     assert("/create" === r.path)
   }
 
+  test("XML FakeRequest") {
+    val body = <foo>bar</foo>
+    val headers = FakeHeaders(Seq("Content-Type" -> Seq("application/xml")))
+    val r = FakeRequest("POST", "/xml", headers, body)
+    assert("POST" === r.method)
+    assert("/xml" === r.path)
+    assert(headers === r.headers)
+    assert(body === r.body)
+  }
+
   test("custom FakeRequest") {
     val body = (123, "Foo")
-    val h = Map("User-Agent" -> "Superb Bot/1.2")
-    val headers = FakeHeaders(h.toSeq.map(t => (t._1, Seq(t._2))))
-    val r = new FakeRequest("PUT", "/update", headers, body)
+    val ua = "Superb Bot/1.2"
+    val r = FakeRequest("PUT", "/update")
+      .withHeaders("User-Agent" -> ua)
+      .withBody(body)
     assert("PUT" === r.method)
     assert("/update" === r.path)
-    assert(headers === r.headers)
     assert(None === r.headers.get("nokey"))
-    assert(h.get("User-Agent") === r.headers.get("User-Agent"))
+    assert(Some(ua) === r.headers.get("User-Agent"))
     assert(body === r.body)
   }
 }
