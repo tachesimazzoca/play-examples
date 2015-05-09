@@ -8,7 +8,6 @@ import play.api.libs.iteratee.{Enumerator, Iteratee}
 import play.api.mvc.BodyParsers.parse
 import play.api.mvc.Results._
 import play.api.mvc._
-import play.api.test._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -16,6 +15,32 @@ import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
 class BodyParserSuite extends FunSuite {
+
+  case class DummyRequestHeader(headersMap: Map[String, Seq[String]] = Map())
+    extends RequestHeader {
+    def id = 1
+
+    def tags = Map()
+
+    def uri = ""
+
+    def path = ""
+
+    def method = ""
+
+    def version = ""
+
+    def queryString = Map()
+
+    def remoteAddress = ""
+
+    def secure = false
+
+    lazy val headers = new Headers {
+      val data = headersMap.toSeq
+    }
+  }
+
   val bytesConsumer = Iteratee.consume[Array[Byte]]()
 
   def byteToStr(bytes: Array[Byte]): String = bytes.map(_.toChar).mkString("")
@@ -40,42 +65,42 @@ class BodyParserSuite extends FunSuite {
 
   test("parse.text") {
     val body = "foo"
-    val headers = Seq(
-      "Content-Type" -> Seq("text/plain; charset=utf-8")
-    )
-    val rh = FakeRequest("POST", "/submit", FakeHeaders(headers), "")
-    val it = parsedIt(parse.text)(rh)
+    val rh = DummyRequestHeader(Map("Content-Type" -> Seq("text/plain")))
+    val it = parse.text(rh)
 
-    parseBody(Enumerator(body.getBytes()), it)
-      .onComplete(a => assert(Success((200, body)) === a))
+    (Enumerator(body.getBytes()) |>>> it)
+      .onComplete {
+      case Success(Right(a)) => assert(body === a)
+      case _ => fail("it must be Success(Right(a))")
+    }
 
     Thread.sleep(500L)
   }
 
   test("parse.xml") {
     val body = "<foo>bar</foo>"
-    val headers = Seq(
-      "Content-type" -> Seq("application/xml")
-    )
-    val rh = FakeRequest("POST", "/submit", FakeHeaders(headers), "")
+    val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/xml")))
     val it = parsedIt(parse.xml)(rh)
 
     parseBody(Enumerator(body.getBytes()), it)
       .onComplete(a => assert(Success((200, body)) === a))
+
+    parseBody(Enumerator("<dead>beef</".getBytes()), it)
+      .onComplete(a => assert(Success((400, "")) === a))
 
     Thread.sleep(500L)
   }
 
   test("parse.json") {
     val body = "[1,2,3]"
-    val headers = Seq(
-      "Content-type" -> Seq("application/json")
-    )
-    val rh = FakeRequest("POST", "/submit", FakeHeaders(headers), "")
+    val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/json")))
     val it = parsedIt(parse.json)(rh)
 
     parseBody(Enumerator(body.getBytes()), it)
       .onComplete(a => assert(Success((200, body)) === a))
+
+    parseBody(Enumerator("dead -> beef!".getBytes()), it)
+      .onComplete(a => assert(Success((400, "")) === a))
 
     Thread.sleep(500L)
   }
