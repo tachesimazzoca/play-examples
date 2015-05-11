@@ -8,15 +8,17 @@ import play.api.libs.iteratee.{Enumerator, Iteratee}
 import play.api.mvc.BodyParsers.parse
 import play.api.mvc.Results._
 import play.api.mvc._
+import play.api.test.FakeRequest
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.io.Source
 import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
 class BodyParserSuite extends FunSuite {
 
-  case class DummyRequestHeader(headersMap: Map[String, Seq[String]] = Map())
+  private case class DummyRequestHeader(headersMap: Map[String, Seq[String]] = Map())
     extends RequestHeader {
     def id = 1
 
@@ -41,22 +43,29 @@ class BodyParserSuite extends FunSuite {
     }
   }
 
-  val bytesConsumer = Iteratee.consume[Array[Byte]]()
+  private val bytesConsumer = Iteratee.consume[Array[Byte]]()
 
-  def byteToStr(bytes: Array[Byte]): String = bytes.map(_.toChar).mkString("")
+  private def withSource[A](source: Source)(block: Source => A): A = {
+    try {
+      block(source)
+    } finally {
+      source.close()
+    }
+  }
 
-  def parsedIt[A](parser: BodyParser[A])(rh: RequestHeader)
-                 (implicit w: Writeable[A]): Iteratee[Array[Byte], Result] =
+  private def byteToStr(bytes: Array[Byte]): String = bytes.map(_.toChar).mkString("")
+
+  private def parsedIt[A](parser: BodyParser[A])(rh: RequestHeader)
+                         (implicit w: Writeable[A]): Iteratee[Array[Byte], Result] =
     parser(rh) mapM {
       case Left(r) =>
         Future.successful(r)
       case Right(a) =>
-        val req = Request(rh, a)
         Future.successful(Ok(a))
     }
 
-  def parseBody(chunk: Enumerator[Array[Byte]],
-                it: Iteratee[Array[Byte], Result]): Future[(Int, String)] = {
+  private def parseBody(chunk: Enumerator[Array[Byte]],
+                        it: Iteratee[Array[Byte], Result]): Future[(Int, String)] = {
     (for {
       r1 <- chunk |>>> it
       r2 <- r1.body |>>> bytesConsumer
@@ -68,7 +77,7 @@ class BodyParserSuite extends FunSuite {
     val rh = DummyRequestHeader(Map("Content-Type" -> Seq("text/plain")))
     val it = parse.text(rh)
 
-    (Enumerator(body.getBytes()) |>>> it)
+    (Enumerator(body.getBytes) |>>> it)
       .onComplete {
       case Success(Right(a)) => assert(body === a)
       case _ => fail("it must be Success(Right(a))")
@@ -77,15 +86,27 @@ class BodyParserSuite extends FunSuite {
     Thread.sleep(500L)
   }
 
+  test("parse.anyContent") {
+    val body = <foo>bar</foo>
+    val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/xml")))
+    val it = parse.anyContent(rh)
+
+    (Enumerator(body.toString().getBytes) |>>> it)
+      .onComplete {
+      case Success(Right(a)) => assert(Some(body) === a.asXml)
+      case _ => fail("it must be Success(Right(a))")
+    }
+  }
+
   test("parse.xml") {
     val body = "<foo>bar</foo>"
     val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/xml")))
     val it = parsedIt(parse.xml)(rh)
 
-    parseBody(Enumerator(body.getBytes()), it)
+    parseBody(Enumerator(body.getBytes), it)
       .onComplete(a => assert(Success((200, body)) === a))
 
-    parseBody(Enumerator("<dead>beef</".getBytes()), it)
+    parseBody(Enumerator("<dead>beef</".getBytes), it)
       .onComplete(a => assert(Success((400, "")) === a))
 
     Thread.sleep(500L)
@@ -96,11 +117,84 @@ class BodyParserSuite extends FunSuite {
     val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/json")))
     val it = parsedIt(parse.json)(rh)
 
-    parseBody(Enumerator(body.getBytes()), it)
+    parseBody(Enumerator(body.getBytes), it)
       .onComplete(a => assert(Success((200, body)) === a))
 
-    parseBody(Enumerator("dead -> beef!".getBytes()), it)
+    parseBody(Enumerator("dead -> beef!".getBytes), it)
       .onComplete(a => assert(Success((400, "")) === a))
+
+    Thread.sleep(500L)
+  }
+
+  test("parse.file") {
+    val body = "Using parse.file"
+    val output = java.io.File.createTempFile("bodyparsersuite-", "")
+    val it = parse.file(to = output)(FakeRequest())
+
+    (Enumerator(body.getBytes) |>>> it)
+      .onComplete {
+      case Success(Right(a)) =>
+        val actual = withSource(Source.fromFile(a)) { s =>
+          s.getLines().toSeq.mkString("")
+        }
+        assert(body === actual)
+      case _ => fail("it must be Success(Right(a))")
+    }
+
+    Thread.sleep(500L)
+
+    output.delete()
+  }
+
+  test("parse.temporaryFile") {
+    val body = "Using parse.temporaryFile"
+    val it = parse.temporaryFile(FakeRequest())
+
+    (Enumerator(body.getBytes) |>>> it)
+      .onComplete {
+      case Success(Right(a)) =>
+        val actual = withSource(Source.fromFile(a.file)) { s =>
+          s.getLines().toSeq.mkString("")
+        }
+        assert(body === actual)
+        a.file.delete()
+      case _ => fail("it must be Success(Right(a))")
+    }
+
+    Thread.sleep(500L)
+  }
+
+  test("parse.multipartFormData") {
+    val rh = DummyRequestHeader(
+      Map("Content-Type" -> Seq("multipart/form-data; boundary=AaB03x")))
+
+    val body = """
+                 |--AaB03x
+                 |content-disposition: form-data; name="id"
+                 |
+                 |1234
+                 |--AaB03x
+                 |content-disposition: form-data; name="file1"; filename="file1.txt"
+                 |Content-Type: text/plain
+                 |
+                 |Using multipart/form-data
+                 |--AaB03x--
+               """.stripMargin.replace(String.format("%n"), "\r\n")
+    val it = parse.maxLength(1024, parse.multipartFormData)(rh)
+
+    (Enumerator(body.getBytes) |>>> it)
+      .onComplete {
+      case Success(Right(Right(a))) =>
+        a.file("file1").map { part =>
+          assert("file1.txt" === part.filename)
+          val actual = withSource(Source.fromFile(part.ref.file)) { s =>
+            s.getLines().toSeq.mkString("")
+          }
+          assert("Using multipart/form-data" === actual)
+          part.ref.file.delete()
+        }
+      case _ => fail("it must be Success(Right(a))")
+    }
 
     Thread.sleep(500L)
   }
