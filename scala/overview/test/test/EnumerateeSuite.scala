@@ -2,6 +2,7 @@ package test
 
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitRunner
 import play.api.libs.iteratee._
 
@@ -9,7 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
-class EnumerateeSuite extends FunSuite {
+class EnumerateeSuite extends FunSuite with ScalaFutures {
   test("&>> is transform") {
     val consume = Iteratee.consume[String]()
 
@@ -20,9 +21,9 @@ class EnumerateeSuite extends FunSuite {
 
     //val result = bytes |>>> byteToHexStr.transform(consume)
     val result = bytes |>>> (byteToHexStr &>> consume)
-    result.onComplete(a => assert(Success("456E756D657261746565") === a))
-
-    Thread.sleep(100L)
+    whenReady(result) { a =>
+      assert("456E756D657261746565" === a)
+    }
   }
 
   test("with Enumerator#(through|&>)") {
@@ -35,9 +36,9 @@ class EnumerateeSuite extends FunSuite {
 
     //val result = strings.through(strToInt) |>>> sum
     val result = (strings &> strToInt) |>>> sum
-    result.onComplete(a => assert(Success(6) === a))
-
-    Thread.sleep(100L)
+    whenReady(result) { a =>
+      assert(6 === a)
+    }
   }
 
   test("apply") {
@@ -51,8 +52,9 @@ class EnumerateeSuite extends FunSuite {
     Iteratee.isDoneOrError(doneIt).onComplete(a => assert(a === Success(true)))
     val transformedIt = strToInt &>> doneIt
     // so any inputs after that will be ignored.
-    (Enumerator("3", "4", "5") |>>> transformedIt).onComplete(a =>
-      assert(Success(3) === a))
+    whenReady(Enumerator("3", "4", "5") |>>> transformedIt) { a =>
+      assert(3 === a)
+    }
 
     // The method apply returns Iteratee[String, Iteratee[Int, Int]]
     val adaptedIt = strToInt(sum)
@@ -61,10 +63,9 @@ class EnumerateeSuite extends FunSuite {
     // The original iteratee has not been done yet because it's just
     // an output of the adaptedIt.
     Iteratee.isDoneOrError(originalIt).onComplete(a => assert(a === Success(false)))
-    val result = Enumerator(3, 4, 5) |>>> originalIt
-    result.onComplete(a => assert(Success(15) === a))
-
-    Thread.sleep(100L)
+    whenReady(Enumerator(3, 4, 5) |>>> originalIt) { a =>
+      assert(15 === a)
+    }
   }
 
   test("mapInput") {
@@ -78,9 +79,9 @@ class EnumerateeSuite extends FunSuite {
 
     // 4 and 5 will be ignored
     val result = Enumerator("1", "2", "3", "END", "4", "5") &> inputToInt |>>> sum
-    result.onComplete(a => assert(Success(6) === a))
-
-    Thread.sleep(100L)
+    whenReady(result) { a =>
+      assert(6 === a)
+    }
   }
 
   test("Traversable") {
@@ -97,13 +98,15 @@ class EnumerateeSuite extends FunSuite {
     def limitChunks(n: Int) = {
       Enumeratee.take[Array[Byte]](n)
     }
-    (enumerator |>>> limitChunks(2) &>> it)
-      .onComplete(a => assert(Success("123456") === a))
+    whenReady(enumerator |>>> limitChunks(2) &>> it) { a =>
+      assert("123456" === a)
+    }
 
     def limitBytes(n: Int) = {
       Traversable.take[Array[Byte]](n)
     }
-    (enumerator |>>> limitBytes(5) &>> it)
-      .onComplete(a => assert(Success("12345") === a))
+    whenReady(enumerator |>>> limitBytes(5) &>> it) { a =>
+      assert("12345" === a)
+    }
   }
 }

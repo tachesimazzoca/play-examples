@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream
 
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.libs.concurrent.Promise
@@ -12,10 +13,9 @@ import play.api.test._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
-class EnumeratorSuite extends FunSuite with OneAppPerSuite {
+class EnumeratorSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
   implicit override lazy val app = FakeApplication()
 
@@ -28,9 +28,9 @@ class EnumeratorSuite extends FunSuite with OneAppPerSuite {
 
     //val result = newIt.flatMap(_.run)
     val result = Iteratee.flatten(newIt).run
-    result.onComplete(a => assert(Success("FooBarBaz") === a))
-
-    Thread.sleep(100L)
+    whenReady(result) { a =>
+      assert("FooBarBaz" === a)
+    }
   }
 
   test("|>>> is apply(i).flatMap(_.run)") {
@@ -39,9 +39,9 @@ class EnumeratorSuite extends FunSuite with OneAppPerSuite {
     //val enumerator = Enumerator("Run", " ", "fluently!")
     //val result = enumerator(consume).flatMap(_.run)
     val result = Enumerator("Run", " ", "fluently!") |>>> consume
-    result.onComplete(a => assert(Success("Run fluently!") === a))
-
-    Thread.sleep(100L)
+    whenReady(result) { a =>
+      assert("Run fluently!" === a)
+    }
   }
 
   test(">>> is andThen") {
@@ -50,9 +50,9 @@ class EnumeratorSuite extends FunSuite with OneAppPerSuite {
     //val enumerator = Enumerator("He", "ll", "o").andThen(Enumerator(" ", "Enum", "erator!"))
     val enumerator = Enumerator("He", "ll", "o") >>> Enumerator(" ", "Enum", "erator!")
     val result = enumerator |>>> consume
-    result.onComplete(a => assert(Success("Hello Enumerator!") === a))
-
-    Thread.sleep(100L)
+    whenReady(result) { a =>
+      assert("Hello Enumerator!" === a)
+    }
   }
 
   test("fromStream") {
@@ -65,9 +65,9 @@ class EnumeratorSuite extends FunSuite with OneAppPerSuite {
     val enumerator = Enumerator.fromStream(
       new ByteArrayInputStream("Hello fromStream".getBytes), chunkSize)
     val result = enumerator |>>> inputLength
-    result.onComplete(a => assert(Success(16) === a))
-
-    Thread.sleep(100L)
+    whenReady(result) { a =>
+      assert(16 === a)
+    }
   }
 
   test("repeatM") {
@@ -78,7 +78,7 @@ class EnumeratorSuite extends FunSuite with OneAppPerSuite {
     }
     enumerator |>> printSink
 
-    Thread.sleep(1000L)
+    Thread.sleep(500L)
     assert(sb.toString.matches("^(Foo)+"))
   }
 
@@ -93,7 +93,7 @@ class EnumeratorSuite extends FunSuite with OneAppPerSuite {
     }
     enumerator |>> printSink
 
-    Thread.sleep(1000L)
+    Thread.sleep(500L)
     assert("FooFooFoo" === sb.toString)
   }
 

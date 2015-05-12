@@ -2,6 +2,7 @@ package test
 
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitRunner
 import play.api.http.HeaderNames._
 import play.api.http.Status._
@@ -13,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
-class ResultsSuite extends FunSuite {
+class ResultsSuite extends FunSuite with ScalaFutures {
   test("apply") {
     val result = Result(
       header = ResponseHeader(200, Map(CONTENT_TYPE -> "text/plain")),
@@ -47,17 +48,19 @@ class ResultsSuite extends FunSuite {
     }
 
     val it = Iteratee.fold[Array[Byte], String]("") { (acc, x) =>
-      acc + x.map(a => "%c".format(a)).mkString("")
+      acc + x.map(_.toChar).mkString("")
     }
 
     // Writeable[String]
     val str = "Hello World!"
-    (enumerator(str) |>>> it)
-      .onComplete(a => assert(Success(str) === a))
+    whenReady(enumerator(str) |>>> it) { a =>
+      assert(str === a)
+    }
 
     // Writeable[Xml]
     val xml = <foo>bar</foo>
-    (enumerator(xml) |>>> it)
-      .onComplete(a => assert(Success(xml.toString) === a))
+    whenReady(enumerator(xml) |>>> it) { a =>
+      assert(xml.toString === a)
+    }
   }
 }

@@ -2,6 +2,7 @@ package test
 
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitRunner
 import play.api.http.Writeable
 import play.api.libs.iteratee.{Enumerator, Iteratee}
@@ -13,10 +14,9 @@ import play.api.test.FakeRequest
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
-import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
-class BodyParserSuite extends FunSuite {
+class BodyParserSuite extends FunSuite with ScalaFutures {
 
   private case class DummyRequestHeader(headersMap: Map[String, Seq[String]] = Map())
     extends RequestHeader {
@@ -77,13 +77,10 @@ class BodyParserSuite extends FunSuite {
     val rh = DummyRequestHeader(Map("Content-Type" -> Seq("text/plain")))
     val it = parse.text(rh)
 
-    (Enumerator(body.getBytes) |>>> it)
-      .onComplete {
-      case Success(Right(a)) => assert(body === a)
+    whenReady(Enumerator(body.getBytes) |>>> it) {
+      case Right(a) => assert(body === a)
       case _ => fail("it must be Success(Right(a))")
     }
-
-    Thread.sleep(500L)
   }
 
   test("parse.anyContent") {
@@ -91,9 +88,8 @@ class BodyParserSuite extends FunSuite {
     val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/xml")))
     val it = parse.anyContent(rh)
 
-    (Enumerator(body.toString().getBytes) |>>> it)
-      .onComplete {
-      case Success(Right(a)) => assert(Some(body) === a.asXml)
+    whenReady(Enumerator(body.toString().getBytes) |>>> it) {
+      case Right(a) => assert(Some(body) === a.asXml)
       case _ => fail("it must be Success(Right(a))")
     }
   }
@@ -103,13 +99,13 @@ class BodyParserSuite extends FunSuite {
     val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/xml")))
     val it = parsedIt(parse.xml)(rh)
 
-    parseBody(Enumerator(body.getBytes), it)
-      .onComplete(a => assert(Success((200, body)) === a))
+    whenReady(parseBody(Enumerator(body.getBytes), it)) { a =>
+      assert((200, body) === a)
+    }
 
-    parseBody(Enumerator("<dead>beef</".getBytes), it)
-      .onComplete(a => assert(Success((400, "")) === a))
-
-    Thread.sleep(500L)
+    whenReady(parseBody(Enumerator("<dead>beef</".getBytes), it)) { a =>
+      assert((400, "") === a)
+    }
   }
 
   test("parse.json") {
@@ -117,13 +113,13 @@ class BodyParserSuite extends FunSuite {
     val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/json")))
     val it = parsedIt(parse.json)(rh)
 
-    parseBody(Enumerator(body.getBytes), it)
-      .onComplete(a => assert(Success((200, body)) === a))
+    whenReady(parseBody(Enumerator(body.getBytes), it)) { a =>
+      assert((200, body) === a)
+    }
 
-    parseBody(Enumerator("dead -> beef!".getBytes), it)
-      .onComplete(a => assert(Success((400, "")) === a))
-
-    Thread.sleep(500L)
+    whenReady(parseBody(Enumerator("dead -> beef!".getBytes), it)) { a =>
+      assert((400, "") === a)
+    }
   }
 
   test("parse.file") {
@@ -131,28 +127,26 @@ class BodyParserSuite extends FunSuite {
     val output = java.io.File.createTempFile("bodyparsersuite-", "")
     val it = parse.file(to = output)(FakeRequest())
 
-    (Enumerator(body.getBytes) |>>> it)
-      .onComplete {
-      case Success(Right(a)) =>
-        val actual = withSource(Source.fromFile(a)) { s =>
-          s.getLines().toSeq.mkString("")
-        }
-        assert(body === actual)
-      case _ => fail("it must be Success(Right(a))")
+    whenReady(Enumerator(body.getBytes) |>>> it) { x =>
+      x match {
+        case Right(a) =>
+          val actual = withSource(Source.fromFile(a)) { s =>
+            s.getLines().toSeq.mkString("")
+          }
+          assert(body === actual)
+        case _ =>
+          fail("it must be Success(Right(a))")
+      }
+      output.delete()
     }
-
-    Thread.sleep(500L)
-
-    output.delete()
   }
 
   test("parse.temporaryFile") {
     val body = "Using parse.temporaryFile"
     val it = parse.temporaryFile(FakeRequest())
 
-    (Enumerator(body.getBytes) |>>> it)
-      .onComplete {
-      case Success(Right(a)) =>
+    whenReady(Enumerator(body.getBytes) |>>> it) {
+      case Right(a) =>
         val actual = withSource(Source.fromFile(a.file)) { s =>
           s.getLines().toSeq.mkString("")
         }
@@ -160,8 +154,6 @@ class BodyParserSuite extends FunSuite {
         a.file.delete()
       case _ => fail("it must be Success(Right(a))")
     }
-
-    Thread.sleep(500L)
   }
 
   test("parse.multipartFormData") {
@@ -182,9 +174,8 @@ class BodyParserSuite extends FunSuite {
                """.stripMargin.replace(String.format("%n"), "\r\n")
     val it = parse.maxLength(1024, parse.multipartFormData)(rh)
 
-    (Enumerator(body.getBytes) |>>> it)
-      .onComplete {
-      case Success(Right(Right(a))) =>
+    whenReady(Enumerator(body.getBytes) |>>> it) {
+      case Right(Right(a)) =>
         a.file("file1").map { part =>
           assert("file1.txt" === part.filename)
           val actual = withSource(Source.fromFile(part.ref.file)) { s =>
@@ -195,7 +186,5 @@ class BodyParserSuite extends FunSuite {
         }
       case _ => fail("it must be Success(Right(a))")
     }
-
-    Thread.sleep(500L)
   }
 }
