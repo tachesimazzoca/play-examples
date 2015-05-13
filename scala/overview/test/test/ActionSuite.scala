@@ -12,7 +12,7 @@ import play.api.libs.iteratee.{Enumerator, Iteratee}
 import play.api.mvc.BodyParsers.parse
 import play.api.mvc.Results._
 import play.api.mvc._
-import play.api.test.{FakeApplication, FakeRequest}
+import play.api.test.{FakeApplication, FakeHeaders, FakeRequest}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -99,6 +99,30 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     }
     whenReady(Enumerator("".getBytes()) |>>> xmlAction(req)) { r =>
       assert(Status.BAD_REQUEST === r.header.status)
+    }
+  }
+
+  test("localhostOnly") {
+    def localhostOnly[A](action: Action[A]): Action[A] =
+      Action.async(action.parser) { request =>
+        if (request.remoteAddress.startsWith("127.0.0.1")) action(request)
+        else Future.successful(Forbidden)
+      }
+
+    val action = localhostOnly {
+      Action {
+        Ok("")
+      }
+    }
+
+    whenReady(action(FakeRequest("GET", "/", FakeHeaders(), null,
+      remoteAddress = "127.0.0.1"))) { r =>
+      assert(Status.OK === r.header.status)
+    }
+
+    whenReady(action(FakeRequest("GET", "/", FakeHeaders(), null,
+      remoteAddress = "192.168.101.101"))) { r =>
+      assert(Status.FORBIDDEN === r.header.status)
     }
   }
 }
