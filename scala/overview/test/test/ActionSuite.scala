@@ -24,7 +24,7 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
   private case class Logging[A](action: Action[A]) extends Action[A] {
     override def apply(request: Request[A]): Future[Result] = {
-      Logger.info(request.toString)
+      Logger.info(request.toString())
       action(request)
     }
 
@@ -73,10 +73,10 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     whenReady(action(req)) { r =>
       assert(Status.OK === r.header.status)
     }
-    whenReady(Enumerator("<foo>bar</foo>".getBytes()) |>>> xmlAction(req)) { r =>
+    whenReady(Enumerator("<foo>bar</foo>".getBytes) |>>> xmlAction(req)) { r =>
       assert(Status.OK === r.header.status)
     }
-    whenReady(Enumerator("".getBytes()) |>>> xmlAction(req)) { r =>
+    whenReady(Enumerator("".getBytes) |>>> xmlAction(req)) { r =>
       assert(Status.BAD_REQUEST === r.header.status)
     }
   }
@@ -94,10 +94,10 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     whenReady(action(req)) { r =>
       assert(Status.OK === r.header.status)
     }
-    whenReady(Enumerator("<foo>bar</foo>".getBytes()) |>>> xmlAction(req)) { r =>
+    whenReady(Enumerator("<foo>bar</foo>".getBytes) |>>> xmlAction(req)) { r =>
       assert(Status.OK === r.header.status)
     }
-    whenReady(Enumerator("".getBytes()) |>>> xmlAction(req)) { r =>
+    whenReady(Enumerator("".getBytes) |>>> xmlAction(req)) { r =>
       assert(Status.BAD_REQUEST === r.header.status)
     }
   }
@@ -123,6 +123,30 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     whenReady(action(FakeRequest("GET", "/", FakeHeaders(), null,
       remoteAddress = "192.168.101.101"))) { r =>
       assert(Status.FORBIDDEN === r.header.status)
+    }
+  }
+
+  test("withSessionId") {
+    val sessKey = "SESSION_ID"
+
+    def withSessionId[A](action: Action[A]): Action[A] =
+      Action.async(action.parser) { request =>
+        if (request.cookies.get(sessKey).isEmpty) {
+          action(request).map { result =>
+            result.withCookies(Cookie(sessKey, System.currentTimeMillis.toString))
+          }
+        } else action(request)
+      }
+
+    val action = withSessionId {
+      Action {
+        Ok("")
+      }
+    }
+
+    val req = FakeRequest()
+    whenReady(action(req)) { result =>
+      assert(result.header.headers.toMap.get("Set-Cookie").isDefined)
     }
   }
 }
