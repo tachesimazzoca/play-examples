@@ -40,6 +40,17 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     override protected def composeAction[A](action: Action[A]): Action[A] = new Logging(action)
   }
 
+  private object AppAction extends ActionBuilder[Request] {
+    override def invokeBlock[A](request: Request[A],
+                                block: (Request[A]) => Future[Result]): Future[Result] = {
+      if (request.remoteAddress.equals("127.0.0.1")) {
+        block(request).map { result =>
+          result.withHeaders("X-UA-Compatible" -> "Chrome=1")
+        }
+      } else Future.successful(Forbidden)
+    }
+  }
+
   private val bytesConsumer = Iteratee.consume[Array[Byte]]()
 
   test("apply") {
@@ -102,6 +113,21 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     }
   }
 
+  test("AppAction") {
+    val action = (LoggingAction andThen AppAction) {
+      Ok("")
+    }
+
+    whenReady(action(FakeRequest("GET", "/app", FakeHeaders(), null,
+      remoteAddress = "127.0.0.1"))) { r =>
+      assert(Status.OK === r.header.status)
+    }
+    whenReady(action(FakeRequest("GET", "/app", FakeHeaders(), null,
+      remoteAddress = "192.168.56.101"))) { r =>
+      assert(Status.FORBIDDEN === r.header.status)
+    }
+  }
+
   test("localhostOnly") {
     def localhostOnly[A](action: Action[A]): Action[A] =
       Action.async(action.parser) { request =>
@@ -126,10 +152,10 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     }
   }
 
-  test("withSessionId") {
+  test("sessIdCookie") {
     val sessKey = "SESSION_ID"
 
-    def withSessionId[A](action: Action[A]): Action[A] =
+    def sessIdCookie[A](action: Action[A]): Action[A] =
       Action.async(action.parser) { request =>
         if (request.cookies.get(sessKey).isEmpty) {
           action(request).map { result =>
@@ -138,7 +164,7 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
         } else action(request)
       }
 
-    val action = withSessionId {
+    val action = sessIdCookie {
       Action {
         Ok("")
       }
@@ -148,5 +174,66 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     whenReady(action(req)) { result =>
       assert(result.header.headers.toMap.get("Set-Cookie").isDefined)
     }
+  }
+
+  test("wrapping action") {
+    def one[A](action: Action[A]): Action[A] =
+      Action.async(action.parser) { request =>
+        Logger.info("one: beforeAction")
+        val future = action(request)
+        Logger.info("one: afterAction")
+        future
+      }
+
+    def two[A](action: Action[A]): Action[A] =
+      Action.async(action.parser) { request =>
+        Logger.info("two: beforeAction")
+        val future = action(request)
+        Logger.info("two: afterAction")
+        future
+      }
+
+    object OneTwoAction extends ActionBuilder[Request] {
+      override def invokeBlock[A](request: Request[A],
+                                  block: (Request[A]) => Future[Result]) = block(request)
+
+      override protected def composeAction[A](action: Action[A]): Action[A] = one(two(action))
+    }
+
+    val action = OneTwoAction {
+      Logger.info("one(two(Action))")
+      Ok("")
+    }
+
+    whenReady(action(FakeRequest())) { _ =>}
+  }
+
+  test("andThen") {
+    def trace[A](label: String)(request: Request[A],
+                                block: (Request[A]) => Future[Result]) = {
+      Logger.info( s"""${label}: beforeAction""")
+      val future = block(request)
+      Logger.info( s"""${label}: afterAction""")
+      future
+    }
+
+    object OneAction extends ActionBuilder[Request] {
+      override def invokeBlock[A](request: Request[A],
+                                  block: (Request[A]) => Future[Result]) =
+        trace("OneAction")(request, block)
+    }
+
+    object TwoAction extends ActionBuilder[Request] {
+      override def invokeBlock[A](request: Request[A],
+                                  block: (Request[A]) => Future[Result]) =
+        trace("TwoAction")(request, block)
+    }
+
+    val action = (OneAction andThen TwoAction) {
+      Logger.info("(OneAction andThen TwoAction)")
+      Ok("")
+    }
+
+    whenReady(action(FakeRequest())) { _ =>}
   }
 }
