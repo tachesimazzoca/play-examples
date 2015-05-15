@@ -294,15 +294,14 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     val AccountAction = new ActionRefiner[UserRequest, AccountRequest] {
       override protected def refine[A](user: UserRequest[A]) = Future.successful {
         (for {
-          id <- user.sessionId
-          session <- SessionStorage.read(id)
-        } yield session)
-          .map(id => new AccountRequest(user, Account(Some(id))))
+          key <- user.sessionId
+          id <- SessionStorage.read(key)
+        } yield new AccountRequest(user, Account(Some(id))))
           .toRight(Forbidden)
       }
     }
 
-    val accountAction = (UserAction andThen AccountAction) { account =>
+    val accountAction = (UserAction andThen AccountAction) {
       Ok("")
     }
     whenReady(accountAction(FakeRequest())) { r =>
