@@ -236,4 +236,81 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
     whenReady(action(FakeRequest())) { _ =>}
   }
+
+  test("ActionFilter") {
+    object RemoteAddressFilter extends ActionFilter[Request] {
+      override protected def filter[A](request: Request[A]) =
+        Future.successful {
+          if (request.remoteAddress.equals("127.0.0.1")) None
+          else Some(Forbidden)
+        }
+    }
+
+    val action = (Action andThen RemoteAddressFilter) { request =>
+      Ok("")
+    }
+
+    whenReady(action(FakeRequest("GET", "/", FakeHeaders(), null,
+      remoteAddress = "127.0.0.1"))) { r =>
+      assert(Status.OK === r.header.status)
+    }
+
+    whenReady(action(FakeRequest("GET", "/", FakeHeaders(), null,
+      remoteAddress = "192.168.101.101"))) { r =>
+      assert(Status.FORBIDDEN === r.header.status)
+    }
+  }
+
+  test("ActionRefiner") {
+    class UserRequest[A](request: Request[A], val sessionId: Option[String])
+      extends WrappedRequest[A](request)
+
+    class AccountRequest[A](val user: UserRequest[A], val account: Account)
+      extends WrappedRequest[A](user)
+
+    case class Account(id: Option[Long])
+
+    object SessionStorage {
+      def read(key: String): Option[Long] = Some(1234L)
+    }
+
+    val sessionKey = "SESSION_ID"
+
+    object UserAction extends ActionBuilder[UserRequest]
+                              with ActionTransformer[Request, UserRequest] {
+      override protected def transform[A](request: Request[A]): Future[UserRequest[A]] =
+        Future.successful {
+          new UserRequest(request, request.cookies.get(sessionKey).map(_.value))
+        }
+    }
+
+    val userAction = UserAction { user =>
+      Ok("")
+    }
+    whenReady(userAction(FakeRequest())) { r =>
+      assert(Status.OK === r.header.status)
+    }
+
+    val AccountAction = new ActionRefiner[UserRequest, AccountRequest] {
+      override protected def refine[A](user: UserRequest[A]) = Future.successful {
+        (for {
+          id <- user.sessionId
+          session <- SessionStorage.read(id)
+        } yield session)
+          .map(id => new AccountRequest(user, Account(Some(id))))
+          .toRight(Forbidden)
+      }
+    }
+
+    val accountAction = (UserAction andThen AccountAction) { account =>
+      Ok("")
+    }
+    whenReady(accountAction(FakeRequest())) { r =>
+      assert(Status.FORBIDDEN === r.header.status)
+    }
+    whenReady(accountAction(FakeRequest()
+      .withCookies(Cookie(sessionKey, "0123456789abcdef")))) { r =>
+      assert(Status.OK === r.header.status)
+    }
+  }
 }
