@@ -1,7 +1,7 @@
-import play.api._
+import controllers.LoggingFilter
 import play.api.mvc._
 
-object Global extends GlobalSettings {
+object Global extends WithFilters(LoggingFilter) {
   override def onRouteRequest(request: RequestHeader): Option[Handler] = {
     (request.method, request.path) match {
       case ("GET", "/routing/items/custom.html") => Some(controllers.RoutingController.custom("customized", 123))
