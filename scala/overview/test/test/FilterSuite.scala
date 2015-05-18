@@ -6,11 +6,13 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.HeaderNames._
+import play.api.http.Status._
 import play.api.libs.iteratee.{Enumerator, Iteratee}
 import play.api.mvc.BodyParsers.parse
 import play.api.mvc.Results._
 import play.api.mvc._
 import play.api.test._
+import play.filters.csrf._
 import play.filters.gzip._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -112,6 +114,44 @@ class FilterSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
       bytes <- result.body |>>> bytesConsumer
     } yield (result, bytes)) { t =>
       assert(GUNZIPPED_BYTES === t._2)
+    }
+  }
+
+  test("CSRFFilter") {
+    val filter = CSRFFilter()
+
+    val action = Action {
+      Ok
+    }
+
+    whenReady(filter(action)(FakeRequest()).run) { r =>
+      assert(OK === r.header.status)
+    }
+
+    val noTokenPostReq = FakeRequest("POST", "/create")
+      .withHeaders(CONTENT_TYPE -> "application/x-www-form-urlencoded")
+    whenReady(filter(action)(noTokenPostReq).run) { r =>
+      assert(FORBIDDEN === r.header.status)
+    }
+
+    val noCheckPostReq = FakeRequest("POST", "/create")
+      .withHeaders(
+        CONTENT_TYPE -> "application/x-www-form-urlencoded",
+        "Csrf-Token" -> "nocheck"
+      )
+    whenReady(filter(action)(noCheckPostReq).run) { r =>
+      assert(OK === r.header.status)
+    }
+
+    val token = "deadbeef-0123456789abcdef"
+    val postReq = FakeRequest("POST", "/create")
+      .withHeaders(
+        CONTENT_TYPE -> "application/x-www-form-urlencoded",
+        "X-Requested-With" -> token
+      )
+      .withSession("csrfToken" -> token)
+    whenReady(filter(action)(postReq).run) { r =>
+      assert(OK === r.header.status)
     }
   }
 }
