@@ -13,7 +13,8 @@ object LoggingFilter extends Filter {
     f(rh).map { result =>
       val ua = rh.headers.get("User-Agent").getOrElse("-")
       val ms = System.currentTimeMillis - startTime
-      val line = s"""${startTime} ${rh.remoteAddress} ${rh.method} ${rh.uri} ${ua} ${ms}"""
+      val line =
+        s"""${rh.remoteAddress} ${rh.method} ${rh.uri} ${ua} ${result.header.status} ${ms}"""
       Logger.info(line)
       result
     }
