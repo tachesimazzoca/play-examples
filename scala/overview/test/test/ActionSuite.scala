@@ -72,12 +72,12 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
     val action = Logging {
       Action {
-        Ok("")
+        Ok
       }
     }
     val xmlAction = Logging {
       Action(parse.tolerantXml) { request =>
-        Ok("")
+        Ok
       }
     }
 
@@ -96,10 +96,10 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     val req = FakeRequest("POST", "/loggingAction")
 
     val action = LoggingAction {
-      Ok("")
+      Ok
     }
     val xmlAction = LoggingAction(parse.tolerantXml) { request =>
-      Ok("")
+      Ok
     }
 
     whenReady(action(req)) { r =>
@@ -115,7 +115,7 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
   test("AppAction") {
     val action = (LoggingAction andThen AppAction) {
-      Ok("")
+      Ok
     }
 
     whenReady(action(FakeRequest("GET", "/app", FakeHeaders(), null,
@@ -137,7 +137,7 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
     val action = localhostOnly {
       Action {
-        Ok("")
+        Ok
       }
     }
 
@@ -166,7 +166,7 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
     val action = sessIdCookie {
       Action {
-        Ok("")
+        Ok
       }
     }
 
@@ -202,7 +202,7 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
     val action = OneTwoAction {
       Logger.info("one(two(Action))")
-      Ok("")
+      Ok
     }
 
     whenReady(action(FakeRequest())) { _ =>}
@@ -231,7 +231,7 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
     val action = (OneAction andThen TwoAction) {
       Logger.info("(OneAction andThen TwoAction)")
-      Ok("")
+      Ok
     }
 
     whenReady(action(FakeRequest())) { _ =>}
@@ -247,7 +247,7 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     }
 
     val action = (Action andThen RemoteAddressFilter) { request =>
-      Ok("")
+      Ok
     }
 
     whenReady(action(FakeRequest("GET", "/", FakeHeaders(), null,
@@ -285,7 +285,7 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     }
 
     val userAction = UserAction { user =>
-      Ok("")
+      Ok
     }
     whenReady(userAction(FakeRequest())) { r =>
       assert(Status.OK === r.header.status)
@@ -302,7 +302,7 @@ class ActionSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     }
 
     val accountAction = (UserAction andThen AccountAction) {
-      Ok("")
+      Ok
     }
     whenReady(accountAction(FakeRequest())) { r =>
       assert(Status.FORBIDDEN === r.header.status)
