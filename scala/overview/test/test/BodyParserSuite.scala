@@ -18,31 +18,6 @@ import scala.io.Source
 @RunWith(classOf[JUnitRunner])
 class BodyParserSuite extends FunSuite with ScalaFutures {
 
-  private case class DummyRequestHeader(headersMap: Map[String, Seq[String]] = Map())
-    extends RequestHeader {
-    def id = 1
-
-    def tags = Map()
-
-    def uri = ""
-
-    def path = ""
-
-    def method = ""
-
-    def version = ""
-
-    def queryString = Map()
-
-    def remoteAddress = ""
-
-    def secure = false
-
-    lazy val headers = new Headers {
-      val data = headersMap.toSeq
-    }
-  }
-
   private val bytesConsumer = Iteratee.consume[Array[Byte]]()
 
   private def withSource[A](source: Source)(block: Source => A): A = {
@@ -74,7 +49,7 @@ class BodyParserSuite extends FunSuite with ScalaFutures {
 
   test("parse.text") {
     val body = "foo"
-    val rh = DummyRequestHeader(Map("Content-Type" -> Seq("text/plain")))
+    val rh = FakeRequest().withHeaders("Content-Type" -> "text/plain")
     val it = parse.text(rh)
 
     whenReady(Enumerator(body.getBytes) |>>> it) {
@@ -85,7 +60,9 @@ class BodyParserSuite extends FunSuite with ScalaFutures {
 
   test("parse.anyContent") {
     val body = <foo>bar</foo>
-    val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/xml")))
+    // The parser anyContent avoid parsing the request body
+    // if the request method is GET or HEAD.
+    val rh = FakeRequest("POST", "/").withHeaders("Content-Type" -> "application/xml")
     val it = parse.anyContent(rh)
 
     whenReady(Enumerator(body.toString().getBytes) |>>> it) {
@@ -96,7 +73,7 @@ class BodyParserSuite extends FunSuite with ScalaFutures {
 
   test("parse.xml") {
     val body = "<foo>bar</foo>"
-    val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/xml")))
+    val rh = FakeRequest().withHeaders("Content-Type" -> "application/xml")
     val it = parsedIt(parse.xml)(rh)
 
     whenReady(parseBody(Enumerator(body.getBytes), it)) { a =>
@@ -110,7 +87,7 @@ class BodyParserSuite extends FunSuite with ScalaFutures {
 
   test("parse.json") {
     val body = "[1,2,3]"
-    val rh = DummyRequestHeader(Map("Content-Type" -> Seq("application/json")))
+    val rh = FakeRequest().withHeaders("Content-Type" -> "application/json")
     val it = parsedIt(parse.json)(rh)
 
     whenReady(parseBody(Enumerator(body.getBytes), it)) { a =>
@@ -157,8 +134,8 @@ class BodyParserSuite extends FunSuite with ScalaFutures {
   }
 
   test("parse.multipartFormData") {
-    val rh = DummyRequestHeader(
-      Map("Content-Type" -> Seq("multipart/form-data; boundary=AaB03x")))
+    val rh = FakeRequest().withHeaders(
+      "Content-Type" -> "multipart/form-data; boundary=AaB03x")
 
     val body = """
                  |--AaB03x
