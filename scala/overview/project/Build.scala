@@ -12,6 +12,7 @@ object ApplicationBuild extends Build {
 
   val appDependencies = Seq(
     filters,
+    ws,
     "org.scalatestplus" % "play_2.10" % "1.0.0" % "test"
   )
 
