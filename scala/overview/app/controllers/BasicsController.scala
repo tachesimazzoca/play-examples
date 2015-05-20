@@ -5,6 +5,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
 
+import scala.util.Try
+
 object BasicsController extends Controller {
   // The charset is handled automatically via the play.api.mvc.Codec type class.
   // Just import an implicit instance of play.api.mvc.Codec in the current scope
@@ -79,26 +81,30 @@ object BasicsController extends Controller {
   }
 
   def download = Action {
-    val file = new java.io.File(getClass.getResource("/resources/a.txt").getPath())
-    //Result(
-    //  header = ResponseHeader(OK, Map(
-    //    CONTENT_DISPOSITION -> "attachment; filename=download-a.txt",
-    //    CONTENT_TYPE -> "application/octet-stream",
-    //    CONTENT_LENGTH -> file.length().toString())),
-    //  body = Enumerator.fromFile(file)
-    //)
-    Ok.sendFile(
-      content = file,
-      inline = false,
-      fileName = { f => "download-" ++ f.getName()},
-      onClose = { () =>
-        println("handled onClose function")
-      }
-    )
+    Try(getClass.getResource("/data/a.txt")).map { url =>
+      val file = new java.io.File(url.getPath())
+      //Result(
+      //  header = ResponseHeader(OK, Map(
+      //    CONTENT_DISPOSITION -> "attachment; filename=download-a.txt",
+      //    CONTENT_TYPE -> "application/octet-stream",
+      //    CONTENT_LENGTH -> file.length().toString())),
+      //  body = Enumerator.fromFile(file)
+      //)
+      Ok.sendFile(
+        content = file,
+        inline = false,
+        fileName = { f => "download-" ++ f.getName()},
+        onClose = { () =>
+          println("handled onClose function")
+        }
+      )
+    }.getOrElse {
+      Forbidden("This action doesn't support a packaged .jar")
+    }
   }
 
   def stream = Action {
-    val input = getClass.getResourceAsStream("/resources/a.txt")
+    val input = getClass.getResourceAsStream("/data/a.txt")
     Ok.chunked(Enumerator.fromStream(input)).withHeaders(
       CONTENT_DISPOSITION -> "attachment; filename=download-a.txt",
       CONTENT_TYPE -> "application/octet-stream"
