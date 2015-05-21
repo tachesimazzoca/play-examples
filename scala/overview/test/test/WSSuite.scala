@@ -9,11 +9,11 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.libs.iteratee.Iteratee
-import play.api.libs.ws.WS
+import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient}
+import play.api.libs.ws.{DefaultWSClientConfig, WS}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
 class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
@@ -138,5 +138,35 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     assert(body.getBytes === bytes)
 
     server.stop(0)
+  }
+
+  test("Custom WSClient") {
+    // Build AsyncHttpClientConfig using the Play application default,
+    val config = new NingAsyncHttpClientConfigBuilder(DefaultWSClientConfig()).build()
+    // or simply just use AsyncHttpClientConfig.Builder, but it might
+    // be difficult to configure the SSL things.
+    //val config = new com.ning.http.client.AsyncHttpClientConfig.Builder().build()
+
+    val client = new NingWSClient(config)
+
+    val body = "wsclient"
+    val server = createHttpServer(
+      host = host,
+      body = body.getBytes
+    )
+
+    server.start()
+
+    val holder = client.url(urlString(host, "/wsclient"))
+    val response = Await.result({
+      holder.get()
+    }, 1.second)
+    assert(200 === response.status)
+    assert(body === response.body)
+
+    server.stop(0)
+
+    // Custom clients must be manually shutdown WSClient#close.
+    client.close()
   }
 }
