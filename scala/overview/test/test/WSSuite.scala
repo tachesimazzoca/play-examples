@@ -9,14 +9,38 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitRunner
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.libs.iteratee.Iteratee
+import play.api.libs.ws._
 import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient}
-import play.api.libs.ws.{DefaultWSClientConfig, WS}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
+import scala.language.implicitConversions
+
 @RunWith(classOf[JUnitRunner])
 class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
+
+  object URLMagnet {
+
+    private val customClient = new NingWSClient(
+      new NingAsyncHttpClientConfigBuilder(DefaultWSClientConfig(
+        requestTimeout = Some(100L)
+      )).build()
+    )
+
+    implicit def fromURL(url: java.net.URL) = new WSRequestHolderMagnet {
+      def apply(): WSRequestHolder = {
+        val urlString = url.toString
+        if (urlString.endsWith("/custom")) {
+          customClient.url(urlString)
+        } else WS.client.url(urlString)
+      }
+    }
+
+    def close(): Unit = {
+      customClient.close()
+    }
+  }
 
   private def createHttpServer(host: InetSocketAddress,
                                path: String = "/",
@@ -24,6 +48,7 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
                                headers: Map[String, String] = Map.empty,
                                sleep: Long = 0,
                                body: Array[Byte] = Array.empty): HttpServer = {
+
     val server = HttpServer.create(host, 5)
 
     server.createContext(path, new HttpHandler() {
@@ -50,7 +75,7 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     try {
       block(io)
     } finally {
-      if (io != null) io.close
+      if (io != null) io.close()
     }
   }
 
@@ -84,7 +109,7 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     val server = createHttpServer(
       host = host,
       headers = Map("Content-Type" -> "application/xml"),
-      body = body.toString.getBytes
+      body = body.toString().getBytes
     )
 
     server.start()
@@ -133,20 +158,20 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     assert(Some(Seq("100")) === headers.headers.get("Content-Length"))
 
     val bytes = Await.result({
-      (enumerator |>>> Iteratee.consume[Array[Byte]]())
+      enumerator |>>> Iteratee.consume[Array[Byte]]()
     }, 1.second)
     assert(body.getBytes === bytes)
 
     server.stop(0)
   }
 
-  test("Custom WSClient") {
-    // Build AsyncHttpClientConfig using the Play application default,
-    val config = new NingAsyncHttpClientConfigBuilder(DefaultWSClientConfig()).build()
-    // or simply just use AsyncHttpClientConfig.Builder, but it might
-    // be difficult to configure the SSL things.
-    //val config = new com.ning.http.client.AsyncHttpClientConfig.Builder().build()
-
+  test("Custom NingWSClient") {
+    val clientConfig = DefaultWSClientConfig(
+      requestTimeout = Some(500L)
+    )
+    val builder = new com.ning.http.client.AsyncHttpClientConfig.Builder()
+      .setMaxRequestRetry(0)
+    val config = new NingAsyncHttpClientConfigBuilder(clientConfig, builder).build()
     val client = new NingWSClient(config)
 
     val body = "wsclient"
@@ -168,5 +193,32 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
     // Custom clients must be manually shutdown WSClient#close.
     client.close()
+  }
+
+  test("WSRequestHolderMagnet") {
+    import URLMagnet._
+
+    val server = createHttpServer(
+      host = host,
+      sleep = 500L
+    )
+
+    server.start()
+
+    val defaultHolder = WS.url(new java.net.URL(urlString(host, "/default")))
+    val response = Await.result({
+      defaultHolder.get()
+    }, 1.second)
+    assert(200 === response.status)
+
+    val customHolder = WS.url(new java.net.URL(urlString(host, "/custom")))
+    intercept[java.util.concurrent.TimeoutException] {
+      Await.result({
+        customHolder.get()
+      }, 1.second)
+    }
+
+    URLMagnet.close()
+    server.stop(0)
   }
 }
