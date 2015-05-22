@@ -2,6 +2,7 @@ package test
 
 import java.net.InetSocketAddress
 
+import com.ning.http.client.AsyncHttpClient
 import com.sun.net.httpserver.{HttpExchange, HttpHandler, HttpServer}
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
@@ -28,14 +29,15 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
       )).build()
     )
 
-    implicit def fromURL(url: java.net.URL) = new WSRequestHolderMagnet {
-      def apply(): WSRequestHolder = {
-        val urlString = url.toString
-        if (urlString.endsWith("/custom")) {
-          customClient.url(urlString)
-        } else WS.client.url(urlString)
+    implicit def fromURL(url: java.net.URL): WSRequestHolderMagnet =
+      new WSRequestHolderMagnet {
+        def apply(): WSRequestHolder = {
+          val urlString = url.toString
+          if (urlString.endsWith("/custom")) {
+            customClient.url(urlString)
+          } else WS.client.url(urlString)
+        }
       }
-    }
 
     def close(): Unit = {
       customClient.close()
@@ -165,6 +167,15 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     server.stop(0)
   }
 
+  test("WSClient#underlying") {
+    val clientConfig = DefaultWSClientConfig()
+    val builder = new com.ning.http.client.AsyncHttpClientConfig.Builder()
+      .setMaxRequestRetry(3)
+    val config = new NingAsyncHttpClientConfigBuilder(clientConfig, builder).build()
+    val client = new NingWSClient(config)
+    val asyncHttpClient = client.underlying[AsyncHttpClient]
+    assert(3 === asyncHttpClient.getConfig.getMaxRequestRetry)
+  }
 
   test("custom NingWSClient") {
     val clientConfig = DefaultWSClientConfig(
