@@ -12,9 +12,9 @@ import play.api.libs.iteratee.Iteratee
 import play.api.libs.ws._
 import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient}
 
-import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-
+import scala.concurrent.{Await, Future}
 import scala.language.implicitConversions
 
 @RunWith(classOf[JUnitRunner])
@@ -124,24 +124,6 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     server.stop(0)
   }
 
-  test("timeout") {
-    val server = createHttpServer(
-      host = host,
-      sleep = 500L
-    )
-
-    server.start()
-
-    val holder = WS.url(urlString(host, "/timeout")).withRequestTimeout(100)
-    intercept[java.util.concurrent.TimeoutException] {
-      Await.result({
-        holder.get()
-      }, 1.second)
-    }
-
-    server.stop(0)
-  }
-
   test("stream") {
     val body = "a" * 100
     val server = createHttpServer(
@@ -165,7 +147,26 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
     server.stop(0)
   }
 
-  test("Custom NingWSClient") {
+  test("timeout") {
+    val server = createHttpServer(
+      host = host,
+      sleep = 500L
+    )
+
+    server.start()
+
+    val holder = WS.url(urlString(host, "/timeout")).withRequestTimeout(100)
+    intercept[java.util.concurrent.TimeoutException] {
+      Await.result({
+        holder.get()
+      }, 1.second)
+    }
+
+    server.stop(0)
+  }
+
+
+  test("custom NingWSClient") {
     val clientConfig = DefaultWSClientConfig(
       requestTimeout = Some(500L)
     )
@@ -193,6 +194,22 @@ class WSSuite extends FunSuite with ScalaFutures with OneAppPerSuite {
 
     // Custom clients must be manually shutdown WSClient#close.
     client.close()
+  }
+
+  test("multiple requests") {
+    val server = createHttpServer(
+      host = host
+    )
+
+    server.start()
+
+    val r1 = WS.url(urlString(host, "/1")).get()
+    val r2 = WS.url(urlString(host, "/2")).get()
+    val r = Await.result({
+      Future.firstCompletedOf(Seq(r1, r2))
+    }, 1.second)
+
+    server.stop(0)
   }
 
   test("WSRequestHolderMagnet") {
