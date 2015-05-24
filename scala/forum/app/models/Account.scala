@@ -49,7 +49,7 @@ object Account {
                 account.password.getOrElse(""), salt),
             'password_salt -> salt,
             'active -> (if (account.active) 1 else 0)
-          ).executeInsert() match {
+          ).executeInsert[Option[Long]]() match {
             case Some(id) => Right(Account(Some(id), account.email, None, account.active))
             case None     => Left("accounts.id is not generated.")
           }
