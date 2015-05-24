@@ -2,7 +2,7 @@ package components.storage
 
 import java.net.{URLDecoder, URLEncoder}
 
-class Storage(engine: StorageEngine) {
+class Storage(engine: StorageEngine, namespace: String = "") {
 
   private def serialize(data: Map[String, String]): Array[Byte] =
     data.map { case (k, v) =>
@@ -17,7 +17,7 @@ class Storage(engine: StorageEngine) {
   }
 
   def create(data: Map[String, String]): String = {
-    val key = java.util.UUID.randomUUID().toString
+    val key = namespace ++ java.util.UUID.randomUUID().toString
     engine.write(key, serialize(data))
     key
   }
@@ -27,7 +27,7 @@ class Storage(engine: StorageEngine) {
       unserialize(bytes)
     }
 
-  def write(key: String, data: Map[String, String]):Boolean =
+  def write(key: String, data: Map[String, String]): Boolean =
     engine.write(key, serialize(data))
 
   def delete(key: String): Boolean = engine.delete(key)

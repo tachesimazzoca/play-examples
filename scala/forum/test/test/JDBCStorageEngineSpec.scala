@@ -44,7 +44,7 @@ class JDBCStorageEngineSpec extends Specification {
   sequential
 
   "JDBCStorageEngine" should {
-    "writes, reads and deletes data for a key" in new WithTables {
+    "write, read and delete data" in new WithTables {
       storage.write("foo", "bar".getBytes) must beTrue
       storage.read("foo") must beSome("bar".getBytes)
       storage.read("bar") must beNone

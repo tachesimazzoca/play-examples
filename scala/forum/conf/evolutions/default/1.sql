@@ -15,11 +15,12 @@ CREATE TABLE `accounts` (
   PRIMARY KEY (`id`)
 );
 
-DROP TABLE IF EXISTS `signup_storage`;
-CREATE TABLE `signup_storage` (
+DROP TABLE IF EXISTS `session_storage`;
+CREATE TABLE `session_storage` (
   `storage_key` varchar(255) NOT NULL,
   `storage_value` text NULL,
   `storage_timestamp` timestamp,
+  PRIMARY KEY(`storage_key`)
 );
 
 # --- !Downs

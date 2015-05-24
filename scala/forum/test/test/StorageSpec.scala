@@ -7,15 +7,15 @@ import org.specs2.mock._
 class StorageSpec extends Specification with Mockito {
 
   "Storage#create" should {
-    "returns a new UUID key" in {
+    "return a new UUID key with the specified namespace" in {
       val engine = mock[StorageEngine]
-      val storage = new Storage(engine)
+      val storage = new Storage(engine, "app_")
 
       val key = storage.create(Map.empty[String, String])
-      key must beMatching("[-0-9a-f]+".r)
+      key must beMatching("app_[-0-9a-f]+".r)
     }
 
-    "writes empty bytes if the data is a empty map" in {
+    "write empty bytes if the data is a empty map" in {
       val engine = mock[StorageEngine]
       val storage = new Storage(engine)
 
@@ -23,7 +23,7 @@ class StorageSpec extends Specification with Mockito {
       there was one(engine).write(anyString, ===("".getBytes))
     }
 
-    "writes serialized bytes if the data is not empty" in {
+    "write serialized bytes if the data is not empty" in {
       val engine = mock[StorageEngine]
       val storage = new Storage(engine)
       val key = storage.create(Map("foo" -> "=bar=", "baz" -> "12 34"))
