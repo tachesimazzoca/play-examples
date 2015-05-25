@@ -36,7 +36,7 @@ object Account {
       case Some(id) => Left("Account.id is not empty.")
       case None =>
         DB.withConnection { implicit conn =>
-          val salt = ""
+          val (hash, salt) = hashPassword(account.password.getOrElse(""))
           SQL("""
             INSERT INTO accounts (
               email, password_hash, password_salt, active
@@ -45,8 +45,7 @@ object Account {
             )
           """).on(
             'email -> account.email,
-            'password_hash -> Account.hashPassword(
-                account.password.getOrElse(""), salt),
+            'password_hash -> hash,
             'password_salt -> salt,
             'active -> (if (account.active) 1 else 0)
           ).executeInsert[Option[Long]]() match {
@@ -79,10 +78,9 @@ object Account {
             ) ++ {
               account.password match {
                 case Some(password) =>
-                  val salt = ""
+                  val (hash, salt) = hashPassword(password)
                   Seq[NamedParameter](
-                    'password_hash -> Account.hashPassword(
-                        account.password.getOrElse(""), salt),
+                    'password_hash -> hash,
                     'password_salt -> salt
                   )
                 case None => Seq()
@@ -114,8 +112,10 @@ object Account {
     }
   }
 
-  def hashPassword(password: String, salt: String): String = {
-    MessageDigest.getInstance("MD5").digest((salt + password).getBytes)
+  def hashPassword(password: String, saltOpt: Option[String] = None): (String, String) = {
+    val salt = saltOpt.getOrElse("")
+    val hash = MessageDigest.getInstance("MD5").digest((salt + password).getBytes)
       .map("%02x".format(_)).mkString
+    (hash, salt)
   }
 }

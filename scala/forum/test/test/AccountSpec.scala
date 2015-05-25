@@ -142,7 +142,8 @@ class AccountSpec extends Specification {
     }
 
     "generate md5-hash password with salt" in {
-      Account.hashPassword("test", "salt") must equalTo("d653ea7ea31e77b41041e7e3d32e3e4a")
+      Account.hashPassword("test", Some("salt")) must_==(
+        ("d653ea7ea31e77b41041e7e3d32e3e4a", "salt"))
     }
   }
 }
