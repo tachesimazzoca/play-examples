@@ -2,7 +2,7 @@ package controllers
 
 import components.form.AccountsEntryForm
 import components.mail.{SignupMailer, SignupMail}
-import models.{Signup, SignupService}
+import models.{SignUp, SignUpSession}
 import play.api.mvc._
 
 import scala.util.{Failure, Success}
@@ -10,7 +10,7 @@ import scala.util.{Failure, Success}
 object AccountsController extends Controller {
 
   val accountsEntryForm = AccountsEntryForm.defaultForm
-  val signupService = new SignupService
+  val signUpSession = new SignUpSession
 
   def entry = Action {
     Ok(views.html.accounts.entry(accountsEntryForm))
@@ -20,7 +20,7 @@ object AccountsController extends Controller {
       accountsEntryForm.bindFromRequest.fold(
         form => BadRequest(views.html.accounts.entry(form)),
         data => {
-          val sessionKey = signupService.create(Signup(data.email))
+          val sessionKey = signUpSession.create(SignUp(data.email))
           val param = SignupMail(sessionKey)
           SignupMailer.send(data.email, param) match {
             case Success(x) => Ok(param.toString)
