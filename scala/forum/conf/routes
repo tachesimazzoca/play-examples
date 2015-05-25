@@ -1,7 +1,9 @@
-GET     /                                        controllers.Application.index
+GET     /                                        controllers.Application.index()
 
-GET     /signup/entry                            controllers.SignupController.entry
-POST    /signup/verify                           controllers.SignupController.verify
-GET     /signup/complete                         controllers.SignupController.complete(code: String)
+GET     /pages/*name                             controllers.PagesController.page(name: String)
+
+GET     /accounts/entry                          controllers.AccountsController.entry
+POST    /accounts/entry                          controllers.AccountsController.postEntry
+GET     /accounts/activate                       controllers.AccountsController.activate(code: String)
 
 GET     /*file                                   controllers.Assets.at(path="/public", file)

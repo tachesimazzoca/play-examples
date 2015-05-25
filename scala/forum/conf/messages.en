@@ -1,3 +1,4 @@
-SignupForm.error.email=Email address must be valid format.
-SignupForm.error.password=Password must statisfy 0-9a-zA-Z characters.
-SignupForm.error.passwords=Password (confirmation) does not match the original password.
+AccountsEntryForm.error.email=Email address must be valid format.
+AccountsEntryForm.error.password=Password must satisfy 0-9a-zA-Z characters.
+AccountsEntryForm.error.passwords=Password (confirmation) does not match the original password.
+AccountsEntryForm.error.uniqueEmail=The email address has already been used.
