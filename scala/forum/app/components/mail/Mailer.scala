@@ -2,14 +2,12 @@ package components.mail
 
 import org.apache.commons.mail.SimpleEmail
 
-import scala.util.{Success, Try}
-
-trait Mailer[T] {
-  def send(headers: Seq[MailHeader], content: T)(implicit relayHost: RelayHost): Try[String]
+trait Mailer[T, A] {
+  def send(headers: Seq[MailHeader], content: T)(implicit relayHost: RelayHost): A
 }
 
-object TextMailer extends Mailer[String] {
-  def send(headers: Seq[MailHeader], content: String)(implicit relayHost: RelayHost): Try[String] = {
+object TextMailer extends Mailer[String, String] {
+  def send(headers: Seq[MailHeader], content: String)(implicit relayHost: RelayHost): String = {
     val email = new SimpleEmail()
     headers.foreach {
       case Charset(x) => email.setCharset(x)
@@ -24,12 +22,13 @@ object TextMailer extends Mailer[String] {
 
     relayHost match {
       case MockRelayHost =>
-        //println(headers)
-        Success("")
+        println(headers)
+        println(content)
+        ""
       case SMTPRelayHost(host, port) =>
         email.setHostName(host)
         email.setSmtpPort(port)
-        Try(email.send)
+        email.send
     }
   }
 }

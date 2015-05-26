@@ -1,0 +1,3 @@
+@(params: SignUpMailer.Params)Hello play-examples/forum
+
+Session Key: @params.sessionKey

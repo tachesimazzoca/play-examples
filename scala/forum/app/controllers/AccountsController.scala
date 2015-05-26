@@ -1,11 +1,8 @@
 package controllers
 
 import components.form.AccountsEntryForm
-import components.mail.{SignupMail, SignupMailer}
-import models.{Account, SignUp, SignUpSession}
+import models.{Account, SignUp, SignUpMailer, SignUpSession}
 import play.api.mvc._
-
-import scala.util.{Failure, Success}
 
 object AccountsController extends Controller {
 
@@ -22,11 +19,9 @@ object AccountsController extends Controller {
         data => {
           val Account.Password(hash, salt) = Account.hashPassword(data.password)
           val sessionKey = signUpSession.create(SignUp(data.email, hash, salt))
-          val param = SignupMail(sessionKey)
-          SignupMailer.send(data.email, param) match {
-            case Success(x) => Ok(param.toString)
-            case Failure(e) => BadRequest(e.getMessage)
-          }
+          val params = SignUpMailer.Params(sessionKey)
+          val messageId = SignUpMailer.send(data.email, params)
+          Ok(params.toString)
         }
       )
     }

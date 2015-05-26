@@ -10,8 +10,6 @@ class MailSpec extends Specification {
 
   import components.mail._
 
-  case class TestTextMail(args: Seq[Any])
-
   "loadHeaders" should {
     "load headers with Play configuration" in new WithApplication(
         FakeApplication(additionalConfiguration = ConfigFactory.parseString("""
