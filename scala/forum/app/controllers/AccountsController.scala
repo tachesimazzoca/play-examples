@@ -1,7 +1,7 @@
 package controllers
 
 import components.form.AccountsEntryForm
-import components.mail.{SignupMailer, SignupMail}
+import components.mail.{SignupMail, SignupMailer}
 import models.{Account, SignUp, SignUpSession}
 import play.api.mvc._
 
