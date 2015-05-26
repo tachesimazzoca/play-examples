@@ -20,7 +20,7 @@ object AccountsController extends Controller {
       accountsEntryForm.bindFromRequest.fold(
         form => BadRequest(views.html.accounts.entry(form)),
         data => {
-          val (hash, salt) = Account.hashPassword(data.password)
+          val Account.Password(hash, salt) = Account.hashPassword(data.password)
           val sessionKey = signUpSession.create(SignUp(data.email, hash, salt))
           val param = SignupMail(sessionKey)
           SignupMailer.send(data.email, param) match {

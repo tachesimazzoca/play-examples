@@ -1,149 +1,145 @@
 package test
 
 import anorm._
+import models.Account
 import org.specs2.mutable._
 import play.api.db._
 import play.api.test._
 
+import scala.util.{Failure, Try}
+
 class AccountSpec extends Specification {
 
-  import models._
+  private val FIXTURE_SQL = Array(
+    """
+    TRUNCATE TABLE accounts
+    """,
+    """
+    INSERT INTO accounts (id, email, password_salt, password_hash, status)
+    VALUES (1, 'user1@example.net', 'slt1', 'hash1', 1)
+    """,
+    """
+    INSERT INTO accounts (id, email, password_salt, password_hash, status)
+    VALUES (2, 'user2@example.net', 'slt2', 'hash2', 0)
+    """
+  )
 
-  "Account model" should {
-    "be retrieved by id" in new WithApplication(FakeApplication()) {
+  "Account#findById" should {
+    "return Option[Account]" in new WithApplication(FakeApplication()) {
       DB.withConnection { implicit conn =>
-        Array(
-          "TRUNCATE TABLE accounts",
-          """
-            INSERT INTO accounts (id, email, password_hash, password_salt, active)
-            VALUES (1, 'user1@example.net', '', '', 1)
-          """
-        ).map { SQL(_).execute() }
+        FIXTURE_SQL.map {
+          SQL(_).execute()
+        }
       }
 
       Account.findById(1) match {
         case Some(account) =>
-          account.id must beSome.which(_ == 1L)
-          account.email must equalTo("user1@example.net")
-          account.password must beNone
-          account.active must equalTo(true)
+          account.id must_== 1L
+          account.email must_== "user1@example.net"
+          account.status must_== Account.Status.ACTIVE
         case None => failure("The record does not exist")
       }
 
-      Account.findById(2) must beNone
+      Account.findById(0) must beNone
+      Account.findById(-1) must beNone
     }
+  }
 
-    "be created if needed" in new WithApplication(FakeApplication()) {
+  "Account#create" should {
+    "insert a row and then return the new one" in new WithApplication(FakeApplication()) {
       DB.withConnection { implicit conn =>
-        Array(
-          "TRUNCATE TABLE accounts"
-        ).map { SQL(_).execute() }
+        SQL("TRUNCATE TABLE accounts").execute()
       }
 
-      Account.create(Account(None, "foo@example.net", Some("bar"), true)) match {
-        case Right(account) =>
-          account.id must beSome.which(_ == 1L)
-          account.email must equalTo("foo@example.net")
-          account.password must beNone
-          account.active must equalTo(true)
-        case Left(msg) => failure(msg)
-      }
+      val a1 = Account.create(Account(0L, "foo@example.net", Account.Status.ACTIVE), "pass")
+      a1.id must_== 1L
+      a1.email must_== "foo@example.net"
+      a1.status must_== Account.Status.ACTIVE
 
-      Account.create(Account(None, "bar@example.net", Some("baz"), false)) match {
-        case Right(account) =>
-          account.id must beSome.which(_ == 2L)
-          account.email must equalTo("bar@example.net")
-          account.password must beNone
-          account.active must equalTo(false)
-        case Left(msg) => failure(msg)
-      }
-    }
+      val a2 = Account.create(Account(0L, "bar@example.net",
+        Account.Status.INACTIVE), Account.Password("salt", "hash"))
+      a2.id must_== 2L
+      a2.email must_== "bar@example.net"
+      a2.status must_== Account.Status.INACTIVE
 
-    "be updated if needed" in new WithApplication(FakeApplication()) {
-      DB.withConnection { implicit conn =>
-        Array(
-          "TRUNCATE TABLE accounts",
-          """
-            INSERT INTO accounts (id, email, password_hash, password_salt, active)
-            VALUES (1, 'user1@example.net', 'pass1', '', 1)
-          """
-        ).map { SQL(_).execute() }
-      }
-
-      Account.update(Account(None, "user2@example.net", Some("pass2"), true)) match {
-        case Right(account) => failure("The empty ID account should not be updated.")
-        case Left(msg) => msg must equalTo("Account.id is empty.")
-      }
-
-      Account.update(Account(Some(2), "user2@example.net", Some("pass2"), true)) match {
-        case Right(account) => failure("The non-exist account should not be updated.")
-        case Left(msg) => msg must equalTo("The account does not exist.")
-      }
-
-      Account.update(Account(Some(1), "user1-2@example.net", Some("pass1-2"), true)) match {
-        case Right(account) =>
-        case Left(msg) => failure("The account could not be updated.")
-      }
-
-      DB.withConnection { implicit conn =>
-        val rows = SQL("SELECT * FROM accounts WHERE id = 1").apply()
-        rows.length must equalTo(1)
-        val row = rows.head
-        row[Long]("id") must equalTo(1L)
-        row[String]("email") must equalTo("user1-2@example.net")
-        row[Boolean]("active") must equalTo(true)
+      Try(Account.create(Account(0L, "bar@example.net",
+        Account.Status.INACTIVE), "pass")) match {
+        case Failure(e) => e.isInstanceOf[java.sql.SQLException]
+        case _ => failure("accounts.email must has a UNIQUE index")
       }
     }
+  }
 
-    "be activated if needed" in new WithApplication(FakeApplication()) {
-      DB.withConnection { implicit conn =>
-        Array(
-          "TRUNCATE TABLE accounts",
-          """
-            INSERT INTO accounts (id, email, password_hash, password_salt, active)
-            VALUES (1, 'user1@example.net', 'pass1', '', 0)
-          """
-        ).map { SQL(_).execute() }
+  "Account#update" should {
+    "update the row and then return the updated one" in
+      new WithApplication(FakeApplication()) {
+        DB.withConnection { implicit conn =>
+          FIXTURE_SQL.map(SQL(_).execute())
+
+          val account = Account.update(Account(1L, "user1-2@example.net",
+            Account.Status.INACTIVE))
+          val rows = SQL("SELECT * FROM accounts WHERE id = 1")()
+          rows.length must_== 1
+          val row1 = rows.head
+          row1[Long]("id") must_== account.id
+          row1[String]("email") must_== account.email
+          row1[Byte]("status") must_== Account.Status.INACTIVE.value
+
+          val row2 = SQL("SELECT * FROM accounts WHERE id = 2")().head
+          row2[String]("email") must_== "user2@example.net"
+          row2[Byte]("status") must_== Account.Status.INACTIVE.value
+        }
       }
+  }
 
-      Account.activate(1)
+  "Account#updatePassword" should {
+    "update the password of the given ID and then return the Password" in
+      new WithApplication(FakeApplication()) {
+        DB.withConnection { implicit conn =>
+          FIXTURE_SQL.map(SQL(_).execute())
 
+          val password = Account.updatePassword(1L, "deadbeef")
+          val row1 = SQL("SELECT * FROM accounts WHERE id = 1")().head
+          row1[String]("password_salt") must_== password.salt
+          row1[String]("password_hash") must_== password.hash
+
+          val row2 = SQL("SELECT * FROM accounts WHERE id = 2")().head
+          row2[String]("password_salt") must_== "slt2"
+          row2[String]("password_hash") must_== "hash2"
+        }
+      }
+  }
+
+  "Account#activate" should {
+    "activate the account if needed" in new WithApplication(FakeApplication()) {
       DB.withConnection { implicit conn =>
-        val rows = SQL("SELECT * FROM accounts WHERE id = 1").apply()
-        rows.length must equalTo(1)
-        val row = rows.head
-        row[Long]("id") must equalTo(1L)
-        row[String]("email") must equalTo("user1@example.net")
-        row[Boolean]("active") must equalTo(true)
+        FIXTURE_SQL.map(SQL(_).execute())
+
+        Account.activate(2)
+
+        val row = SQL("SELECT * FROM accounts WHERE id = 2")().head
+        row[Byte]("status") must_== Account.Status.ACTIVE.value
       }
     }
+  }
 
-    "be deactivated if needed" in new WithApplication(FakeApplication()) {
+  "Account#deactivate" should {
+    "deactivate the account if needed" in new WithApplication(FakeApplication()) {
       DB.withConnection { implicit conn =>
-        Array(
-          "TRUNCATE TABLE accounts",
-          """
-            INSERT INTO accounts (id, email, password_hash, password_salt, active)
-            VALUES (1, 'user1@example.net', 'pass1', '', 1)
-          """
-        ).map { SQL(_).execute() }
-      }
+        FIXTURE_SQL.map(SQL(_).execute())
 
-      Account.deactivate(1)
+        Account.deactivate(1)
 
-      DB.withConnection { implicit conn =>
-        val rows = SQL("SELECT * FROM accounts WHERE id = 1").apply()
-        rows.length must equalTo(1)
-        val row = rows.head
-        row[Long]("id") must equalTo(1L)
-        row[String]("email") must equalTo("user1@example.net")
-        row[Boolean]("active") must equalTo(false)
+        val row = SQL("SELECT * FROM accounts WHERE id = 1")().head
+        row[Byte]("status") must_== Account.Status.INACTIVE.value
       }
     }
+  }
 
-    "generate md5-hash password with salt" in {
-      Account.hashPassword("test", Some("salt")) must_==(
-        ("d653ea7ea31e77b41041e7e3d32e3e4a", "salt"))
+  "Account#hashPassword" should {
+    "generate a hashed password with the given salt" in {
+      Account.hashPassword("test", Some("salt")) must_==
+        Account.Password("salt", "9875cadfaf93c78efff30378dd054cf9a5f4a723")
     }
   }
 }

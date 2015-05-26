@@ -1,26 +1,41 @@
 package models
 
-import play.api.db._
-import play.api.Play.current
-
-import anorm._
 import anorm.SqlParser._
+import anorm._
+import org.apache.commons.codec.digest.DigestUtils
+import org.apache.commons.lang3.RandomStringUtils
+import play.api.Play.current
+import play.api.db._
 
-import java.security.MessageDigest
-
-case class Account(
-  id: Option[Long],
-  email: String,
-  password: Option[String],
-  active: Boolean
-)
+case class Account(id: Long, email: String, status: Account.Status)
 
 object Account {
-  val simple = {
-    get[Option[Long]]("accounts.id") ~
-    get[String]("accounts.email") ~
-    get[Boolean]("accounts.active") map {
-      case id ~ email ~ active => Account(id, email, None, active)
+
+  case class Password(salt: String, hash: String)
+
+  case class Status(value: Int)
+
+  object Status {
+    val INACTIVE = Status(0)
+    val ACTIVE = Status(1)
+
+    def fromValue(v: Int): Status = {
+      if (v == 0) INACTIVE
+      else ACTIVE
+    }
+  }
+
+  private val PASSWORD_SALT_LENGTH = 4
+
+  private val simple = {
+    get[Long]("accounts.id") ~
+      get[String]("accounts.email") ~
+      get[Byte]("accounts.status") map {
+      case id ~ email ~ status => Account(
+        id,
+        email,
+        Status.fromValue(status)
+      )
     }
   }
 
@@ -31,74 +46,69 @@ object Account {
     }
   }
 
-  def create(account: Account): Either[String, Account] = {
-    account.id match {
-      case Some(id) => Left("Account.id is not empty.")
-      case None =>
-        DB.withConnection { implicit conn =>
-          val (hash, salt) = hashPassword(account.password.getOrElse(""))
-          SQL("""
-            INSERT INTO accounts (
-              email, password_hash, password_salt, active
-            ) VALUES (
-              {email}, {password_hash}, {password_salt}, {active}
-            )
-          """).on(
-            'email -> account.email,
-            'password_hash -> hash,
-            'password_salt -> salt,
-            'active -> (if (account.active) 1 else 0)
-          ).executeInsert[Option[Long]]() match {
-            case Some(id) => Right(Account(Some(id), account.email, None, account.active))
-            case None     => Left("accounts.id is not generated.")
-          }
-        }
+  def findByEmail(email: String): Option[Account] = {
+    DB.withConnection { implicit conn =>
+      SQL("SELECT * FROM accounts WHERE email = {email}")
+        .on('email -> email).as(Account.simple.singleOpt)
     }
   }
 
-  def update(account: Account): Either[String, Account] = {
-    account.id match {
-      case Some(id) =>
-        DB.withConnection { implicit conn =>
-          val inSql = "UPDATE accounts SET email = {email}" + {
-            account.password match {
-              case Some(password) =>
-                """
-                , password_hash = {password_hash}
-                , password_salt = {password_salt}
-                """
-              case None => ""
-            }
-          } + " WHERE id = {id}"
-
-          val params =
-            Seq[NamedParameter](
-              'id -> id,
-              'email -> account.email
-            ) ++ {
-              account.password match {
-                case Some(password) =>
-                  val (hash, salt) = hashPassword(password)
-                  Seq[NamedParameter](
-                    'password_hash -> hash,
-                    'password_salt -> salt
-                  )
-                case None => Seq()
-              }
-            }
-
-          SQL(inSql).on(params: _*).executeUpdate() match {
-            case 0 => Left("The account does not exist.")
-            case _ => Right(account)
-          }
-        }
-      case None => Left("Account.id is empty.")
+  def create(account: Account, password: Password): Account = {
+    DB.withConnection { implicit conn =>
+      SQL( """
+            INSERT INTO accounts (
+              email, password_salt, password_hash, status
+            ) VALUES (
+              {email}, {password_salt}, {password_hash}, {status}
+            )
+           """).on(
+          'email -> account.email,
+          'password_salt -> password.salt,
+          'password_hash -> password.hash,
+          'status -> account.status.value
+        ).executeInsert[Option[Long]]() match {
+        case Some(generatedId) => account.copy(id = generatedId)
+        case None => sys.error("Failed to generate accounts.id")
+      }
     }
+  }
+
+  def create(account: Account, password: String): Account = {
+    create(account, hashPassword(password))
+  }
+
+  def update(account: Account): Account = {
+    DB.withConnection { implicit conn =>
+      SQL("UPDATE accounts" +
+        " SET email = {email}" +
+        " , status = {status}" +
+        " WHERE id = {id}")
+        .on(
+          'email -> account.email,
+          'status -> account.status.value,
+          'id -> account.id).executeUpdate()
+      account
+    }
+  }
+
+  def updatePassword(id: Long, password: String): Password = {
+    val pw = hashPassword(password)
+    DB.withConnection { implicit conn =>
+      SQL("UPDATE accounts" +
+        " SET password_salt = {password_salt}" +
+        " , password_hash = {password_hash}" +
+        " WHERE id = {id}").on(
+          'password_salt -> pw.salt,
+          'password_hash -> pw.hash,
+          'id -> id).executeUpdate()
+    }
+    pw
   }
 
   def activate(id: Long) {
     DB.withConnection { implicit conn =>
-      SQL("UPDATE accounts SET active = 1 WHERE id = {id}").on(
+      SQL("UPDATE accounts SET status = {status} WHERE id = {id}").on(
+        'status -> Status.ACTIVE.value,
         'id -> id
       ).executeUpdate()
     }
@@ -106,16 +116,17 @@ object Account {
 
   def deactivate(id: Long) {
     DB.withConnection { implicit conn =>
-      SQL("UPDATE accounts SET active = 0 WHERE id = {id}").on(
+      SQL("UPDATE accounts SET status = {status} WHERE id = {id}").on(
+        'status -> Status.INACTIVE.value,
         'id -> id
       ).executeUpdate()
     }
   }
 
-  def hashPassword(password: String, saltOpt: Option[String] = None): (String, String) = {
-    val salt = saltOpt.getOrElse("")
-    val hash = MessageDigest.getInstance("MD5").digest((salt + password).getBytes)
-      .map("%02x".format(_)).mkString
-    (hash, salt)
+  def hashPassword(password: String,
+                   saltOpt: Option[String] = None): Password = {
+    val salt = saltOpt.getOrElse(RandomStringUtils.randomAlphabetic(PASSWORD_SALT_LENGTH))
+    val hash = DigestUtils.sha1Hex(salt ++ password)
+    Password(salt, hash)
   }
 }
