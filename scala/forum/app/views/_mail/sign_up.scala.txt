@@ -1,3 +1,3 @@
-@(params: SignUpMailer.Params)Hello play-examples/forum
+@(params: SignUpMailer.Params)(implicit app: play.api.Application)Hello play-examples/forum
 
-Session Key: @params.sessionKey
+@config("app.baseurl")@routes.AccountsController.activate(params.sessionKey)

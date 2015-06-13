@@ -6,7 +6,7 @@ import scala.collection.JavaConversions._
 
 package object mail {
   def loadConfiguration(name: String)(implicit app: Application): List[MailHeader] =
-    app.configuration.getConfig("mailer." + name) map { config =>
+    app.configuration.getConfig(name) map { config =>
       val charset = config.getString("Charset").map(Charset)
       val subject = config.getString("Subject").map(Subject)
 

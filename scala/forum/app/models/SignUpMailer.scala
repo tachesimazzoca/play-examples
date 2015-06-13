@@ -8,7 +8,7 @@ object SignUpMailer {
 
   implicit val relayHost: RelayHost = MockRelayHost
 
-  private val headers = loadConfiguration("SignUpMailer")
+  private val headers = loadConfiguration("app.mailer.SignUpMailer")
 
   def send(address: String, params: Params): String = {
     val hs = Charset("iso-2022-jp") :: To(Seq(Address(address))) :: headers
