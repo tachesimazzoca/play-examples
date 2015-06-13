@@ -27,7 +27,7 @@ class MailSpec extends Specification {
           |  ]
           |}
         """.stripMargin).root.unwrapped.toMap)) {
-      loadConfiguration("TestMailer") must equalTo(List(
+      loadConfiguration("mailer.TestMailer") must equalTo(List(
         Charset("iso-2022-jp"),
         Subject("Test Subject"),
         From(Address("from@example.net", "")),
