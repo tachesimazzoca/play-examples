@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import play.twirl.sbt.Import._
 import play.Play.autoImport._
 import PlayKeys._
 
@@ -20,6 +21,7 @@ object ApplicationBuild extends Build {
   val main = Project(appName, file(".")).enablePlugins(play.PlayScala).settings(
     version := appVersion,
     javaOptions in Test += "-Dconfig.file=conf/application.test.conf",
-    libraryDependencies ++= appDependencies
+    libraryDependencies ++= appDependencies,
+    TwirlKeys.templateImports += "views._helpers.tags._"
   )
 }
