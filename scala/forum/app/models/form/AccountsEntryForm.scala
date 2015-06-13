@@ -1,4 +1,4 @@
-package components.form
+package models.form
 
 import play.api.data.Forms._
 import play.api.data._
@@ -30,7 +30,7 @@ object AccountsEntryForm {
     ) { (email, passwords, _) =>
       AccountsEntryForm(email, passwords._1)
     } { a =>
-      Some(a.email, ("", ""), true)
+      Some(a.email, (a.password, a.password), true)
     }
   )
 

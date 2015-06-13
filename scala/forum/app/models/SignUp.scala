@@ -25,4 +25,6 @@ class SignUpSession(storage: Storage) {
       passwordSalt <- data.get("passwordSalt")
     } yield SignUp(email, passwordHash, passwordSalt)
   }
+
+  def delete(key: String): Boolean = storage.delete(key)
 }

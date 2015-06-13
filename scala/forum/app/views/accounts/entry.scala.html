@@ -1,9 +1,9 @@
-@(accountsEntryForm: Form[components.form.AccountsEntryForm])(implicit lang: Lang)
+@(accountsEntryForm: Form[models.form.AccountsEntryForm])(implicit lang: Lang)
 
 @import play.api.i18n._
 @import _helpers.main._
 
-@_layouts.main(Some("Sign Up")) {
+@_layouts.main(Some("Account Registration")) {
 
   @if(accountsEntryForm.hasErrors) {
 <div class="alert alert-danger">

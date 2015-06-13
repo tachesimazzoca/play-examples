@@ -1,0 +1,11 @@
+@(account: Account)
+
+@_layouts.main(Some("Account Registration")) {
+<div class="alert alert-success">
+  <p>Your account has been created successfully.</p>
+  <p>Your email address is <code>@account.email</code>.</p>
+</div>
+<div>
+  <a href="" class="btn btn-default">Edit your profile</a>
+</div>
+}
