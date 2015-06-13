@@ -23,11 +23,11 @@ class ViewsSpec extends Specification {
         )
       )
     ) {
-      val params = SignUpMailer.Params("deadbeef") 
+      val params = SignUpMailer.Params("deadbeef")
       val expected = """Hello play-examples/forum
-          |
-          |http://test.example.net:9000/accounts/activate?code=deadbeef
-          |""".stripMargin
+                       |
+                       |http://test.example.net:9000/accounts/activate?code=deadbeef
+                       |""".stripMargin
 
       views.txt._mail.sign_up(params).body must_== expected
     }
