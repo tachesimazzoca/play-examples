@@ -33,14 +33,12 @@
           </div>
           <div class="collapse navbar-collapse" id="jsNavbarCollapse-1">
             <ul class="nav navbar-nav">
-              <li><a href="questions">Questions</a></li>
-              <li><a href="dashboard">Dashboard</a></li>
+              <li><a href="#">Questions</a></li>
+              <li><a href="@routes.DashboardController.index()">Dashboard</a></li>
               <li><a href="@routes.PagesController.page("help/")">Help</a></li>
-              <li><a href="accounts/logout">Sign Out</a></li>
-              <!--
-              <li><a href="accounts/entry">Sign Up</a></li>
-              <li><a href="accounts/login">Sign In</a></li>
-              -->
+              <!--<li><a href="@routes.AccountsController.logout()">Sign Out</a></li>-->
+              <li><a href="@routes.AccountsController.entry()">Sign Up</a></li>
+              <li><a href="@routes.AccountsController.login()">Sign In</a></li>
             </ul>
           </div>
         </div>

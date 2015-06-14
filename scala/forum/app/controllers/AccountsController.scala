@@ -82,6 +82,10 @@ object AccountsController extends Controller {
     }
   }
 
+  def logout = GuestAction { request =>
+    Redirect(routes.AccountsController.login())
+  }
+
   def login = GuestAction { request =>
     Ok(views.html.accounts.login(accountsLoginForm))
   }
