@@ -3,7 +3,6 @@ package controllers
 import models.{Account, AccountService, SignUp, SignUpMailer, SignUpSession}
 import models.form.AccountsEntryForm
 import play.api.mvc._
-import scala.util.Try
 
 object AccountsController extends Controller {
 
@@ -39,18 +38,18 @@ object AccountsController extends Controller {
   }
 
   def activate(code: String) = Action {
-    (for {
-      signUp <- signUpSession.find(code)
-      account <- Try {
+    signUpSession.find(code).map { signUp =>
+      accountService.findByEmail(signUp.email).map { _ =>
+        Redirect(routes.AccountsController.errorsEmail())
+      }.getOrElse {
         signUpSession.delete(code)
-        accountService.create(
+        val account = accountService.create(
           Account(0L, signUp.email, Account.Status.ACTIVE),
           Account.Password(signUp.passwordHash, signUp.passwordSalt)
         )
-      }.toOption
-    } yield {
-      Ok(views.html.accounts.activate(account))
-    }).getOrElse {
+        Ok(views.html.accounts.activate(account))
+      }
+    }.getOrElse {
       Redirect(routes.AccountsController.errorsSession())
     }
   }
