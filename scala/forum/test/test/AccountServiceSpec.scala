@@ -145,4 +145,22 @@ class AccountServiceSpec extends Specification {
       }
     }
   }
+
+  "AccountService#authenticate" should {
+    "authenticate the account if needed" in new WithApplication(FakeApplication()) {
+      DB.withConnection { implicit conn =>
+        FIXTURE_SQL.map(SQL(_).execute())
+
+        val service = new AccountService
+        service.updatePassword(1L, "password1")
+        service.authenticate("user1@example.net", "") must beNone
+        service.authenticate("user1@example.net", "password") must beNone
+        val accountOpt = service.authenticate("user1@example.net", "password1")
+        accountOpt must beSome
+        val account  = accountOpt.get
+        account.id must_== 1L
+        account.email must_== "user1@example.net" 
+      }
+    }
+  }
 }

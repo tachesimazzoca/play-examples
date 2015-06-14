@@ -2,3 +2,7 @@ AccountsEntryForm.error.email=Email address must be valid format.
 AccountsEntryForm.error.password=Password must satisfy 0-9a-zA-Z characters.
 AccountsEntryForm.error.passwords=Password (confirmation) does not match the original password.
 AccountsEntryForm.error.uniqueEmail=The email address has already been used.
+
+AccountsLoginForm.error.email=Email address must be valid format.
+AccountsLoginForm.error.password=Password is required.
+AccountsLoginForm.error.auth=Authentication falied.

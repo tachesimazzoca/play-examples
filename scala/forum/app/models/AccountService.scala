@@ -10,26 +10,27 @@ class AccountService {
   private val simple = {
     get[Long]("accounts.id") ~
       get[String]("accounts.email") ~
+      get[String]("accounts.password_salt") ~
+      get[String]("accounts.password_hash") ~
       get[Byte]("accounts.status") map {
-      case id ~ email ~ status => Account(
-        id,
-        email,
-        Account.Status.fromValue(status)
-      )
+      case id ~ email ~ passwordSalt ~ passwordHash ~ status =>
+        val account = Account(id, email, Account.Status.fromValue(status))
+        val password = Account.Password(passwordSalt, passwordHash)
+        (account, password)
     }
   }
 
   def findById(id: Long): Option[Account] = {
     DB.withConnection { implicit conn =>
       SQL("SELECT * FROM accounts WHERE id = {id}")
-        .on('id -> id).as(simple.singleOpt)
+        .on('id -> id).as(simple.singleOpt).map(_._1)
     }
   }
 
   def findByEmail(email: String): Option[Account] = {
     DB.withConnection { implicit conn =>
       SQL("SELECT * FROM accounts WHERE email = {email}")
-        .on('email -> email).as(simple.singleOpt)
+        .on('email -> email).as(simple.singleOpt).map(_._1)
     }
   }
 
@@ -100,6 +101,18 @@ class AccountService {
         'status -> Account.Status.INACTIVE.value,
         'id -> id
       ).executeUpdate()
+    }
+  }
+
+  def authenticate(email: String, password: String): Option[Account] = {
+    DB.withConnection { implicit conn =>
+      SQL("SELECT * FROM accounts WHERE email = {email}")
+        .on('email -> email).as(simple.singleOpt)
+        .flatMap { case (account, pw) =>
+          if (Account.hashPassword(password, Some(pw.salt)) == pw) {
+            Some(account)
+          } else None
+        }
     }
   }
 }
