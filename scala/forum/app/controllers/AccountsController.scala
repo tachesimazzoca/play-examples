@@ -9,45 +9,33 @@ import models.SignUpMailer
 import models.SignUpSession
 import models.UserLogin
 import models.UserLoginSession
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
 
 import scala.concurrent.Future
 
 object AccountsController extends Controller {
 
-  private val SESSION_KEY_USER_LOGIN = "user"
-
-  private val accountService = new AccountService
+  private val accountService = UserAction.accountService
 
   private val accountsEntryForm = AccountsEntryForm.defaultForm
   private val signUpSession = new SignUpSession
 
   private val accountsLoginForm = AccountsLoginForm.defaultForm
-  private val userLoginSession = new UserLoginSession
+  private val userLoginSession = UserAction.userLoginSession
 
-  object GuestAction extends ActionBuilder[Request] {
-    override def invokeBlock[A](request: Request[A],
-                                block: (Request[A]) => Future[Result]): Future[Result] = {
-      block(request).map { result =>
-        result.withSession(request.session - SESSION_KEY_USER_LOGIN)
-      }
-    }
-  }
-
-  def errorsSession = GuestAction {
+  def errorsSession = (UserAction andThen GuestAction) { implicit request =>
     BadRequest(views.html.accounts.errors.session())
   }
 
-  def errorsEmail = GuestAction {
+  def errorsEmail = (UserAction andThen GuestAction) { implicit request =>
     BadRequest(views.html.accounts.errors.email())
   }
 
-  def entry = GuestAction {
+  def entry = (UserAction andThen GuestAction) { implicit request =>
     Ok(views.html.accounts.entry(accountsEntryForm))
   }
 
-  def postEntry = GuestAction { implicit request =>
+  def postEntry = (UserAction andThen GuestAction) { implicit request =>
     accountsEntryForm.bindFromRequest.fold(
       form => BadRequest(views.html.accounts.entry(form)),
       data => {
@@ -66,11 +54,11 @@ object AccountsController extends Controller {
     )
   }
 
-  def verify = GuestAction {
+  def verify = (UserAction andThen GuestAction) { implicit request =>
     Ok(views.html.accounts.verify())
   }
 
-  def activate(code: String) = GuestAction {
+  def activate(code: String) = (UserAction andThen GuestAction) { implicit request =>
     signUpSession.find(code).map { signUp =>
       accountService.findByEmail(signUp.email).map { _ =>
         Redirect(routes.AccountsController.errorsEmail())
@@ -87,21 +75,22 @@ object AccountsController extends Controller {
     }
   }
 
-  def logout = GuestAction { request =>
+  def logout = (UserAction andThen GuestAction) { implicit request =>
     Redirect(routes.AccountsController.login())
   }
 
-  def login = GuestAction { request =>
+  def login = (UserAction andThen GuestAction) { implicit request =>
     Ok(views.html.accounts.login(accountsLoginForm))
   }
 
-  def postLogin = Action { implicit request =>
+  def postLogin = UserAction { implicit request =>
     accountsLoginForm.bindFromRequest.fold(
       form => BadRequest(views.html.accounts.login(form)),
       data => {
         accountService.authenticate(data.email, data.password).map { account =>
           val key = userLoginSession.create(UserLogin(account.id))
-          Redirect(routes.Application.index()).withSession(SESSION_KEY_USER_LOGIN -> key)
+          Redirect(routes.DashboardController.index())
+            .withSession(UserAction.SESSION_KEY_USER_LOGIN -> key)
         }.getOrElse {
           val formWithError = accountsLoginForm.fill(data)
             .withError("password", "AccountsLoginForm.error.auth")
