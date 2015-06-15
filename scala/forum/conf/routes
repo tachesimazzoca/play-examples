@@ -2,16 +2,16 @@ GET     /                                        controllers.Application.index()
 
 GET     /pages/*name                             controllers.PagesController.page(name: String)
 
-GET     /dashboard                               controllers.DashboardController.index
+GET     /dashboard                               @controllers.DashboardController.index
 
-GET     /accounts/errors/session                 controllers.AccountsController.errorsSession
-GET     /accounts/errors/email                   controllers.AccountsController.errorsEmail
-GET     /accounts/entry                          controllers.AccountsController.entry
-POST    /accounts/entry                          controllers.AccountsController.postEntry
-GET     /accounts/verify                         controllers.AccountsController.verify
-GET     /accounts/activate                       controllers.AccountsController.activate(code: String)
-GET     /accounts/login                          controllers.AccountsController.login
-POST    /accounts/login                          controllers.AccountsController.postLogin
-GET     /accounts/logout                         controllers.AccountsController.logout
+GET     /accounts/errors/session                 @controllers.AccountsController.errorsSession
+GET     /accounts/errors/email                   @controllers.AccountsController.errorsEmail
+GET     /accounts/entry                          @controllers.AccountsController.entry
+POST    /accounts/entry                          @controllers.AccountsController.postEntry
+GET     /accounts/verify                         @controllers.AccountsController.verify
+GET     /accounts/activate                       @controllers.AccountsController.activate(code: String)
+GET     /accounts/login                          @controllers.AccountsController.login
+POST    /accounts/login                          @controllers.AccountsController.postLogin
+GET     /accounts/logout                         @controllers.AccountsController.logout
 
 GET     /*file                                   controllers.Assets.at(path="/public", file)
