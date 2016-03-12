@@ -4,8 +4,6 @@ version := "1.0-SNAPSHOT"
 
 scalaVersion := "2.11.8"
 
-javaOptions in Test += "-Dconfig.file=conf/application.test.conf"
-
 libraryDependencies ++= Seq(
   jdbc,
   "com.typesafe.play" %% "anorm" % "2.5.0",

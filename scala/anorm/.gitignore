@@ -1,10 +1,5 @@
 *~
 
-/.cache
-/.classpath
-/.project
-/.settings
-
 /.idea
 /*.iml
 
@@ -13,5 +8,4 @@
 /target
 
 /logs
-/conf/application.conf
-/conf/application.test.conf
+/conf/*
