@@ -10,6 +10,27 @@ import test.models.User
 @RunWith(classOf[JUnitRunner])
 class WithResultSuite extends FunSuite with OneAppPerSuite {
 
+  test("as") {
+    val parser: RowParser[(Long, String)] =
+      SqlParser.long("id") ~ SqlParser.str("email") map {
+        case id ~ email => (id -> email)
+      }
+
+    val users = Seq(
+      User(1L, "user1@example.net", new java.util.Date(), 1),
+      User(2L, "user2@example.net", new java.util.Date(), 1),
+      User(3L, "user3@example.net", new java.util.Date(), 1)
+    )
+    User.withInMemoryTable(users) { implicit conn =>
+      val userList: List[(Long, String)] =
+        SQL("SELECT * FROM users").as(parser.*)
+      assert(userList === List(
+        1L -> "user1@example.net",
+        2L -> "user2@example.net",
+        3L -> "user3@example.net"))
+    }
+  }
+
   test("withResult") {
     val users = Seq(
       User(1L, "user1@example.net", new java.util.Date(), 1),
