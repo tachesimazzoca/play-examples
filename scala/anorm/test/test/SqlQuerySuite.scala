@@ -4,11 +4,10 @@ import anorm._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
-import org.scalatestplus.play.OneAppPerSuite
 import test.models.User
 
 @RunWith(classOf[JUnitRunner])
-class SqlQuerySuite extends FunSuite with OneAppPerSuite {
+class SqlQuerySuite extends FunSuite {
 
    test("Implicit conversion to SimpleSql") {
      val sq = SQL("SELECT * FROM users WHERE id = {id}")

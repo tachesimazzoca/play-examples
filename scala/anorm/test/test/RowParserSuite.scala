@@ -4,19 +4,18 @@ import anorm._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
-import org.scalatestplus.play.OneAppPerSuite
 import test.models.User
 
 @RunWith(classOf[JUnitRunner])
-class RowParserSuite extends FunSuite with OneAppPerSuite {
+class RowParserSuite extends FunSuite {
 
   private def timestamp(x: Long = 0): Long = {
     System.currentTimeMillis + x / 1000 * 1000
   }
 
   test("~") {
-    var user1 = User(1, "user1@example.net", new java.util.Date(timestamp()), 1)
-    var user2 = User(2, "user2@example.net", new java.util.Date(timestamp(86400 * 1000)), 1)
+    val user1 = User(1, "user1@example.net", new java.util.Date(timestamp()), 1)
+    val user2 = User(2, "user2@example.net", new java.util.Date(timestamp(86400 * 1000)), 1)
 
     User.withInMemoryTable(Seq(user1, user2)) { implicit conn =>
       val selectQuery = SQL( """SELECT * FROM users WHERE id = {id}""")

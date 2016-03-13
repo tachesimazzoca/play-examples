@@ -4,11 +4,10 @@ import anorm._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
-import org.scalatestplus.play.OneAppPerSuite
 import test.models.User
 
 @RunWith(classOf[JUnitRunner])
-class WithResultSuite extends FunSuite with OneAppPerSuite {
+class WithResultSuite extends FunSuite {
 
   test("as") {
     val parser: RowParser[(Long, String)] =
