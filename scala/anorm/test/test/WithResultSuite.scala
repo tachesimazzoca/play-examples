@@ -63,16 +63,16 @@ class WithResultSuite extends FunSuite {
     )
 
     User.withInMemoryTable(users) { implicit conn =>
-      val result: Either[List[Throwable], List[Row]] =
+      val result: Either[List[Throwable], Map[Long, String]] =
         SQL("SELECT * FROM users ORDER BY id")
-          .fold(List.empty[Row]) { (acc, row) =>
-          acc :+ row
+          .fold(Map.empty[Long, String]) { (acc, row) =>
+          acc + (row[Long]("id") -> row[String]("email"))
         }
-      val userList = result.right.get
-      assert(userList.size === 3)
-      assert(userList(0)[String]("email") === "user1@example.net")
-      assert(userList(1)[String]("email") === "user2@example.net")
-      assert(userList(2)[String]("email") === "user3@example.net")
+      val userMap = result.right.get
+      assert(userMap.size === 3)
+      assert(userMap(1L) === "user1@example.net")
+      assert(userMap(2L) === "user2@example.net")
+      assert(userMap(3L) === "user3@example.net")
     }
   }
 
