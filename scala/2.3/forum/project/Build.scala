@@ -6,13 +6,14 @@ import PlayKeys._
 
 object ApplicationBuild extends Build {
 
+  scalaVersion := "2.11.8"
+
   val appName         = "play-forum"
-  val appVersion      = "1.0-SNAPSHOT"
+  val appVersion      = "0.1.0-SNAPSHOT"
 
   val appDependencies = Seq(
     jdbc,
     anorm,
-    //"mysql" % "mysql-connector-java" % "5.1.21",
     "com.h2database" % "h2" % "1.4.178",
     "org.apache.commons" % "commons-email" % "1.3.2",
     "org.jvnet.mock-javamail" % "mock-javamail" % "1.9" % "test"
