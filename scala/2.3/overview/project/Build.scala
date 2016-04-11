@@ -5,15 +5,15 @@ import PlayKeys._
 
 object ApplicationBuild extends Build {
 
-  scalaVersion := "2.10.4"
+  scalaVersion := "2.11.8"
 
   val appName         = "play-overview"
-  val appVersion      = "1.0-SNAPSHOT"
+  val appVersion      = "0.1.0-SNAPSHOT"
 
   val appDependencies = Seq(
     filters,
     ws,
-    "org.scalatestplus" % "play_2.10" % "1.0.0" % "test"
+    "org.scalatestplus" %% "play" % "1.1.0" % "test"
   )
 
   val main = Project(appName, file(".")).enablePlugins(play.PlayScala).settings(
