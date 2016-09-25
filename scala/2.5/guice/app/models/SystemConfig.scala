@@ -3,7 +3,7 @@ package models
 import scala.collection.JavaConversions._
 
 class SystemConfig(properties: Map[String, String]) {
-  def systemProperty(key: String): Option[String] = properties.get(key)
+  def property(key: String): Option[String] = properties.get(key)
 }
 
 object SystemConfig {
