@@ -5,7 +5,7 @@ class MockStorage extends Storage {
 
   def read(key: String): Option[String] = data.get(key)
 
-  def write(key: String, value: String) {
+  def write(key: String, value: String) = {
     data = data.updated(key, value)
   }
 

@@ -1,11 +1,13 @@
 package controllers
 
-import javax.inject.Inject
-import javax.inject.Named
+import javax.inject.{Inject, Named}
+
 import models._
 import play.api.mvc._
 
-class IndexController @Inject()(@Named("session") storage: Storage) extends Controller {
+class IndexController @Inject()(
+  clock: Clock, @Named("session") storage: Storage) extends Controller {
+
   def index = Action {
     Ok(views.html.index())
   }
@@ -18,11 +20,13 @@ class IndexController @Inject()(@Named("session") storage: Storage) extends Cont
 
   def update(key: String, value: String) = Action {
     storage.write(key, value)
-    Ok("Count: " + storage.count)
+    Ok("Updated at %s; Count: %d".format(
+      new java.util.Date(clock.currentTimeMillis), storage.count))
   }
 
   def remove(key: String) = Action {
     storage.delete(key)
-    Ok("Count: " + storage.count)
+    Ok("Removed at %s; Count: %d".format(
+      new java.util.Date(clock.currentTimeMillis), storage.count))
   }
 }
