@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule
 import com.google.inject.name.Names
 import models._
 
-class DevelopmentModule extends AbstractModule {
+class AppConfiguration extends AbstractModule {
   def configure() = {
 
     bind(classOf[Storage])
