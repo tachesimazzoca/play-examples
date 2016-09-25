@@ -6,8 +6,13 @@ import models._
 
 class DevelopmentModule extends AbstractModule {
   def configure() = {
+
     bind(classOf[Storage])
       .annotatedWith(Names.named("session"))
       .to(classOf[MockStorage])
+
+    bind(classOf[SystemConfig])
+      .toProvider(classOf[SystemConfigProvider])
+      .asEagerSingleton()
   }
 }

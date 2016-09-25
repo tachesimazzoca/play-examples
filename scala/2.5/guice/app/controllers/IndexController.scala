@@ -6,10 +6,15 @@ import models._
 import play.api.mvc._
 
 class IndexController @Inject()(
-  clock: Clock, @Named("session") storage: Storage) extends Controller {
+  clock: Clock, @Named("session") storage: Storage,
+  fooService: FooService,
+  barService: BarService) extends Controller {
 
   def index = Action {
-    Ok(views.html.index())
+    Ok(views.html.index(
+      Map(
+        "fileEncoding" -> fooService.fileEncoding,
+        "osName" -> barService.osName).mapValues(_.getOrElse(""))))
   }
 
   def show(key: String) = Action {

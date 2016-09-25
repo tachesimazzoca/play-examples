@@ -1,4 +1,4 @@
-@()<!DOCTYPE html>
+@(params: Map[String, String])<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -9,6 +9,11 @@
     <li><a href="@routes.IndexController.show("foo")">Show</a></li>
     <li><a href="@routes.IndexController.update("foo", "bar")">Update</a></li>
     <li><a href="@routes.IndexController.remove("foo")">Remove</a></li>
+  </ul>
+  <ul>
+    @for((k, v) <- params) {
+      <li>@k: @v</li>
+    }
   </ul>
 </body>
 </html>
