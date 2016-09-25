@@ -9,3 +9,4 @@
 
 /logs
 /conf/application.conf
+/conf/logback.xml
