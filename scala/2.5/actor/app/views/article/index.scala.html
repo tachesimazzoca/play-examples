@@ -1,0 +1,26 @@
+@(entries: Seq[Article])<html>
+<head>
+    <title>Play Examples | Akka</title>
+</head>
+<body>
+<form action="@routes.ArticleController.search()" method="get">
+  <div><input name="q"> <input type="submit" value="Search"></div>
+</form>
+<hr>
+
+@for(entry <- entries) {
+<dl>
+  <p>@entry.content</p>
+  <div><small>postedAt: @(new java.util.Date(entry.postedAt))</small></div>
+  <div><small><a href="@routes.ArticleController.delete(entry.id)">Delete</a></small></div>
+</dl>
+<hr>
+}
+
+<form action="@routes.ArticleController.entry()" method="post">
+  <div><textarea name="content"></textarea></div>
+  <div><input type="submit" value="Post"></div>
+</form>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+@(keyword: String, entries: Seq[Article])<html>
+<head>
+    <title>Play Examples | Akka</title>
+</head>
+<body>
+<h1>Search Result: <em>@keyword</em></h1>
+@for(entry <- entries) {
+<div>
+  <dl>
+    <p>@entry.content</p>
+    <div><small>postedAt: @(new java.util.Date(entry.postedAt))</small></div>
+  </dl>
+  <hr>
+</div>
+}
+<p>
+  <a href="@routes.ArticleController.index()">Back To Index</a>
+</p>
+</body>
+</html>

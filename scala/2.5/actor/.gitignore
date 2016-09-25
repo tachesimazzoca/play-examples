@@ -1,0 +1,12 @@
+*~
+
+/.idea
+/*.iml
+
+/project/project
+/project/target
+/target
+
+/logs
+/conf/application.conf
+/conf/logback.xml

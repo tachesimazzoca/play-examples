@@ -1,0 +1,4 @@
+GET      /article                        controllers.ArticleController.index
+POST     /article/entry                  controllers.ArticleController.entry
+GET      /article/delete/:id             controllers.ArticleController.delete(id)
+GET      /article/search                 controllers.ArticleController.search
