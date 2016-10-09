@@ -23,7 +23,7 @@ class RowParserSuite extends FunSuite {
   private def toCharSeq(reader: Reader): Seq[Char] =
     Iterator.continually(reader.read).takeWhile(_ != -1).map(_.toChar).toSeq
 
-  test("~") {
+  test("~(p: RowParser[B]) creates RowParser[A ~ B]") {
     val selectQuery = SQL( """SELECT * FROM users WHERE id = {id}""")
 
     val parser = SqlParser.long("id") ~
@@ -47,7 +47,14 @@ class RowParserSuite extends FunSuite {
     }
   }
 
-  test("~ as case class") {
+  test("case class ~") {
+
+    val unaryLikeTuple: ~[~[Long, String], Int] = new ~(new ~(123L, "foo@example.net"), 1)
+    val tuple: (Long, String, Int) = unaryLikeTuple match {
+      case ~(~(id, email), status) => (id, email, status)
+    }
+    assert(tuple === (123L, "foo@example.net", 1))
+
     val selectQuery = SQL( """SELECT * FROM users WHERE id = {id}""")
 
     val parser: RowParser[~[~[~[~[~[Long, String], java.util.Date], Int], InputStream], String]] =
