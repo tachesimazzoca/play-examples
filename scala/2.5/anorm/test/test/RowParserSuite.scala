@@ -26,7 +26,7 @@ class RowParserSuite extends FunSuite {
   test("~") {
     val selectQuery = SQL( """SELECT * FROM users WHERE id = {id}""")
 
-    val parser = SqlParser.int("id") ~
+    val parser = SqlParser.long("id") ~
       SqlParser.str("email") ~
       SqlParser.date("birthday") ~
       SqlParser.int("status") ~
@@ -44,6 +44,30 @@ class RowParserSuite extends FunSuite {
     User.withInMemoryTable(Seq(user1, user2)) { implicit conn =>
       assert(selectQuery.on('id -> 1).as(parser.single) === user1)
       assert(selectQuery.on('id -> 2).as(parser.single) === user2)
+    }
+  }
+
+  test("~ as case class") {
+    val selectQuery = SQL( """SELECT * FROM users WHERE id = {id}""")
+
+    val parser: RowParser[~[~[~[~[~[Long, String], java.util.Date], Int], InputStream], String]] =
+      SqlParser.long("id") ~ SqlParser.str("email") ~
+        SqlParser.date("birthday") ~
+        SqlParser.int("status") ~
+        SqlParser.binaryStream("icon") ~
+        SqlParser.str("description")
+    val userParser: RowParser[User] = parser map {
+      case ~(~(~(~(~(id, email), birthday), status), icon), desc) =>
+        User(id, email, new java.util.Date(birthday.getTime), status, toByteSeq(icon), desc)
+    }
+
+    val user1 = User(1, "user1@example.net",
+      new java.util.Date(timestamp()), 1)
+    val user2 = User(2, "user2@example.net",
+      new java.util.Date(timestamp(86400 * 1000)), 1)
+    User.withInMemoryTable(Seq(user1, user2)) { implicit conn =>
+      assert(selectQuery.on('id -> 1).as(userParser.single) === user1)
+      assert(selectQuery.on('id -> 2).as(userParser.single) === user2)
     }
   }
 
