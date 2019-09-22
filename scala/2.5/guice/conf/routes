@@ -1,0 +1,6 @@
+GET   /                      controllers.IndexController.index
+GET   /show/:key             controllers.IndexController.show(key: String)
+GET   /update/:key/:value    controllers.IndexController.update(key: String, value: String)
+GET   /remove/:key           controllers.IndexController.remove(key: String)
+
+GET   /*file                 controllers.Assets.at(path="/public", file)
