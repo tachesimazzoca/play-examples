@@ -1,4 +1,4 @@
-name := "play-anorm"
+name := "play-examples-anorm"
 
 version := "0.1.0-SNAPSHOT"
 

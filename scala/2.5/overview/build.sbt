@@ -1,4 +1,4 @@
-name := "play-overview"
+name := "play-examples-overview"
 
 version := "0.1.0-SNAPSHOT"
 
