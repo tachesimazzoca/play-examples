@@ -1,0 +1,19 @@
+GET     /                                        controllers.Application.index()
+
+GET     /pages                                   controllers.PagesController.index()
+GET     /pages/*name                             controllers.PagesController.page(name: String)
+
+GET     /account/login                           controllers.AccountController.login(returnTo: Option[String])
+POST    /account/login                           controllers.AccountController.postLogin()
+GET     /account/logout                          controllers.AccountController.logout()
+
+GET     /account/create                          controllers.AccountController.create()
+POST    /account/create                          controllers.AccountController.postCreate()
+GET     /account/verify                          controllers.AccountController.verify()
+GET     /account/activate                        controllers.AccountController.activate()
+GET     /account/error/*name                     controllers.AccountController.error(name: String)
+
+GET     /dashboard                               controllers.DashboardController.index()
+GET     /dashboard/access                        controllers.DashboardController.access()
+
+GET     /*file                                   controllers.Assets.at(path="/public", file)

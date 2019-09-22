@@ -1,0 +1,3 @@
+@(field: play.api.data.Field, args: (Symbol,Any)*)
+
+<textarea @toHtmlArgs(args.filter(_._1 != 'type).toMap)name="@field.name">@field.value.getOrElse("")</textarea>

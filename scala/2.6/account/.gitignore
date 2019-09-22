@@ -1,0 +1,15 @@
+*~
+
+/.idea
+/*.iml
+
+/target
+/project/project
+/project/target
+
+/conf/application.conf
+/conf/logback.xml
+
+/logs
+
+/.history

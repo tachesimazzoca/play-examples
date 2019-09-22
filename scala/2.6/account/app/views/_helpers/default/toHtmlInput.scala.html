@@ -1,0 +1,6 @@
+@(field: play.api.data.Field, args: (Symbol,Any)*)
+
+<input type="@args.toMap.get('type).map(_.toString).getOrElse("text")"
+       @toHtmlArgs(args.filter(_._1 != 'type).toMap)
+       name="@field.name"
+       value="@field.value.getOrElse("")">

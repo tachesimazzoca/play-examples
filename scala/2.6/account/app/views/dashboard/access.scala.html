@@ -1,0 +1,30 @@
+@(accountAccessRows: Seq[models.AccountAccess])
+
+@import _helpers.default._
+
+@_layouts.default(None) {
+
+  <ul class="breadcrumb">
+    <li><a href="@routes.DashboardController.index()">Dashboard</a></li>
+    <li class="active">Access Information</li>
+  </ul>
+
+  <h1 class="page-header">Access Information</h1>
+
+  @if(!accountAccessRows.isEmpty) {
+  <table class="table">
+    <tr>
+      <th>Date</th>
+      <th>IP Address</th>
+      <th>User-Agent</th>
+    </tr>
+    @for(row <- accountAccessRows) {
+    <tr>
+      <td nowrap="nowrap">@row.createdAt</td>
+      <td nowrap="nowrap">@row.remoteAddress</td>
+      <td>@row.userAgent</td>
+    </tr>
+    }
+  </table>
+  }
+}

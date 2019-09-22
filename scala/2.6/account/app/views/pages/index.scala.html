@@ -1,0 +1,9 @@
+@()
+
+@_layouts.default(Some("Home")) {
+<ul>
+  <li><a href="@routes.DashboardController.index()">Dashboard</a></li>
+  <li><a href="@routes.AccountController.create()">Sign Up</a></li>
+  <li><a href="@routes.AccountController.login(None)">Sign In</a></li>
+</ul>
+}

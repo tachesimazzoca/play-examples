@@ -1,0 +1,44 @@
+@(form: Form[models.form.AccountLoginForm])(implicit messages: Messages)
+
+@import _helpers.default._
+@import play.api.i18n.Messages
+
+@_layouts.default(Some("Sign In")) {
+
+  @if(form.hasErrors) {
+    <div class="alert alert-danger">
+      <ul>
+      @form.errors.map { err =>
+        <li>@Messages(err.message, err.args: _*)</li>
+      }
+      </ul>
+    </div>
+  }
+
+  <div style="max-width: 400px; margin: 0 auto">
+    @helper.form(routes.AccountController.postLogin()) {
+      @toHtmlInput(form("returnTo"), 'type -> "hidden")
+      <div class="well">
+        <div class="form-group">
+          <label>E-mail Address</label>
+          @toHtmlInput(form("email"), 'class -> "form-control")
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          @toHtmlInput(form("password"), 'type -> "password", 'class -> "form-control")
+        </div>
+        <div style="text-align: center">
+          <div class="checkbox">
+            <label><input type="checkbox" name="keepMeLoggedIn"
+                value="true"@{
+                  form("keepMeLoggedIn").value.map { x =>
+                    if (x == "true") Html(""" checked="checked"""")
+                  }
+                }>Keep me logged in</label>
+          </div>
+          <input type="submit" value="Sign In" class="btn btn-success">
+        </div>
+      </div>
+    }
+  </div>
+}

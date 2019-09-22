@@ -1,0 +1,11 @@
+@(account: Account)
+
+@_layouts.default(Some("Account Registration")) {
+<div class="alert alert-success">
+    <p>Your account has been created successfully.</p>
+    <p>Your email address is <code>@account.email</code>.</p>
+</div>
+<div>
+    <a href="@routes.DashboardController.index()" class="btn btn-default">Your Dashboard</a>
+</div>
+}

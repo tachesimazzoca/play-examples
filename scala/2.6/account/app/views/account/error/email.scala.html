@@ -1,0 +1,8 @@
+@()
+
+@_layouts.default(Some("Account Registration")) {
+<p>The email has already been used. Sorry, try again.</p>
+<div>
+  <a href="@routes.AccountController.create()" class="btn btn-default">Create a new account</a>
+</div>
+}
