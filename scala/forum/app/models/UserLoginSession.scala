@@ -1,6 +1,7 @@
 package models
 
-import components.storage.{JDBCStorageEngine, Storage}
+import components.storage.JDBCStorageEngine
+import components.storage.Storage
 
 class UserLoginSession(storage: Storage) {
 

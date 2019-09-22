@@ -109,10 +109,10 @@ class AccountService {
       SQL("SELECT * FROM accounts WHERE email = {email}")
         .on('email -> email).as(simple.singleOpt)
         .flatMap { case (account, pw) =>
-          if (Account.hashPassword(password, Some(pw.salt)) == pw) {
-            Some(account)
-          } else None
-        }
+        if (Account.hashPassword(password, Some(pw.salt)) == pw) {
+          Some(account)
+        } else None
+      }
     }
   }
 }

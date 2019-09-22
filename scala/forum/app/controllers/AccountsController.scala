@@ -1,12 +1,17 @@
 package controllers
 
-import models.{Account, AccountService}
-import models.{SignUp, SignUpMailer, SignUpSession}
-import models.{UserLogin, UserLoginSession}
 import models.form.AccountsEntryForm
 import models.form.AccountsLoginForm
+import models.Account
+import models.AccountService
+import models.SignUp
+import models.SignUpMailer
+import models.SignUpSession
+import models.UserLogin
+import models.UserLoginSession
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
+
 import scala.concurrent.Future
 
 object AccountsController extends Controller {
@@ -48,7 +53,7 @@ object AccountsController extends Controller {
       data => {
         accountService.findByEmail(data.email).map { _ =>
           val formWithError = accountsEntryForm.bind(
-              accountsEntryForm.mapping.unbind(data).updated("uniqueEmail", "false"))
+            accountsEntryForm.mapping.unbind(data).updated("uniqueEmail", "false"))
           BadRequest(views.html.accounts.entry(formWithError))
         }.getOrElse {
           val Account.Password(hash, salt) = Account.hashPassword(data.password)
@@ -99,7 +104,7 @@ object AccountsController extends Controller {
           Redirect(routes.Application.index()).withSession(SESSION_KEY_USER_LOGIN -> key)
         }.getOrElse {
           val formWithError = accountsLoginForm.fill(data)
-              .withError("password", "AccountsLoginForm.error.auth")
+            .withError("password", "AccountsLoginForm.error.auth")
           BadRequest(views.html.accounts.login(formWithError))
         }
       }

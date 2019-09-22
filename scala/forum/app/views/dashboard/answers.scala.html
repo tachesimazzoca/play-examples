@@ -1,0 +1,29 @@
+@()
+
+@_layouts.main(Some("Answers")) {
+
+<table class="table">
+<thead>
+<tr>
+  <th>#</th>
+  <th>Status</th>
+  <th colspan="2">Answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td>Draft</td>
+  <td>
+    <div>Hello ...</div>
+    <div class="text-muted"><small>2015-01-23 01:23:45</small></div>
+  </td>
+  <td class="text-right text-nowrap">
+    <a href="#" class="btn btn-default">Edit</a></li>
+    <a href="#" onclick="return confirm('Are you sure to delete?')" class="btn btn-danger">Delete</a>
+  </td>
+</tr>
+</tbody>
+</table>
+<p>...</p>
+}

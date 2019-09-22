@@ -2,7 +2,6 @@ package models.form
 
 import play.api.data.Forms._
 import play.api.data._
-import play.api.data.format.Formats._
 
 case class AccountsLoginForm(email: String, password: String)
 

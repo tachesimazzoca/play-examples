@@ -1,0 +1,33 @@
+@()
+
+@_layouts.main(Some("Questions")) {
+
+<p>
+   <a href="#" class="btn btn-default">New Question</a>
+</p>
+
+<table class="table">
+<thead>
+<tr>
+  <th>#</th>
+  <th>Status</th>
+  <th colspan="2">Subject</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td>Published</td>
+  <td>
+    <div><a href="#">Test Title</a></div>
+    <div class="text-muted"><small>Posted at 2015-01-23 012:23:45</small></div>
+  </td>
+  <td class="text-right">
+    <a href="#" class="btn btn-default">Edit</a></li>
+    <a href="#" onclick="return confirm('Are you sure to delete?')" class="btn btn-danger">Delete</a>
+  </td>
+</tr>
+</tbody>
+</table>
+<p>...</p>
+}

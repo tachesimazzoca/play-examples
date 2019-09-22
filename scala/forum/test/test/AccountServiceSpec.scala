@@ -1,12 +1,14 @@
 package test
 
 import anorm._
-import models.{Account, AccountService}
+import models.Account
+import models.AccountService
 import org.specs2.mutable._
 import play.api.db._
 import play.api.test._
 
-import scala.util.{Failure, Try}
+import scala.util.Failure
+import scala.util.Try
 
 class AccountServiceSpec extends Specification {
 
@@ -157,9 +159,9 @@ class AccountServiceSpec extends Specification {
         service.authenticate("user1@example.net", "password") must beNone
         val accountOpt = service.authenticate("user1@example.net", "password1")
         accountOpt must beSome
-        val account  = accountOpt.get
+        val account = accountOpt.get
         account.id must_== 1L
-        account.email must_== "user1@example.net" 
+        account.email must_== "user1@example.net"
       }
     }
   }
